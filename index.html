@@ -1,177 +1,82 @@
 <!doctype html>
-<html lang="ru">
-<title>Палаццо де Агой · буклет</title>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;1,300&family=IBM+Plex+Mono:wght@400&display=swap">
-<style>
-/* Layout: full-viewport 3D stage; title top-left, transport bar bottom-centre, page panel docked right (bottom sheet on phones). */
-:root{
-  --stage-a:#F2EEE5; --stage-b:#D5CEC0; --bg:#E6E1D6;
-  --ink:#25231E; --muted:#6D675A; --panel:rgba(250,247,240,.88); --line:rgba(37,35,30,.15);
-  --btn:#25231E; --btn-fg:#F7F2E6; --field:rgba(255,255,255,.6); --focus:#8A5A2B;
-  --font-ui:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --stage-a:#2B2925; --stage-b:#12110E; --bg:#1A1916;
-    --ink:#EEE7D6; --muted:#A59D8A; --panel:rgba(30,28,24,.88); --line:rgba(238,231,214,.16);
-    --btn:#EEE7D6; --btn-fg:#1B1A16; --field:rgba(255,255,255,.07); --focus:#D9A566;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --stage-a:#2B2925; --stage-b:#12110E; --bg:#1A1916;
-  --ink:#EEE7D6; --muted:#A59D8A; --panel:rgba(30,28,24,.88); --line:rgba(238,231,214,.16);
-  --btn:#EEE7D6; --btn-fg:#1B1A16; --field:rgba(255,255,255,.07); --focus:#D9A566;
-  color-scheme:dark;
-}
-html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:14px;line-height:1.4;overflow:hidden}
-*{box-sizing:border-box}
-.app{position:relative;height:100%;padding-block:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
-#stage{position:absolute;inset:0;pointer-events:auto;user-select:none;-webkit-user-select:none;background:radial-gradient(120% 90% at 50% 40%,var(--stage-a),var(--stage-b));overflow:hidden}
-#stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
-#stage canvas.drag{cursor:grabbing}
-.app>*:not(#stage){pointer-events:auto;z-index:2}
-.app>header,.app>.bar{position:relative}
-header{flex-wrap:wrap;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none}
-header>*{pointer-events:auto}
-h1{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em}
-.meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:2px}
-button,input,label.btn{font:inherit;color:inherit}
-.btn{appearance:none;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--ink);height:36px;padding:0 14px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
-.btn:hover{border-color:var(--ink)}
-.btn.primary{background:var(--btn);color:var(--btn-fg);border-color:var(--btn)}
-.btn:focus-visible,input:focus-visible,summary:focus-visible,li:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.btn.icon{width:36px;padding:0}
-.btn.sm{height:28px;padding:0 10px;font-size:12px}
-.btn.sm.icon{width:28px;padding:0}
-.bar{align-self:center;display:flex;align-items:center;gap:10px;width:min(620px,100%);padding:8px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.bar .btn{border-color:transparent;background:transparent;backdrop-filter:none}
-.bar .btn:hover{background:var(--line)}
-.bar input[type=range]{flex:1;min-width:0}
-.state{font-family:var(--font-mono);font-size:12px;min-width:132px;text-align:right;color:var(--muted)}
-input[type=range]{accent-color:var(--btn);height:20px}
-aside{position:absolute;top:60px;right:max(16px,env(safe-area-inset-right,0px));bottom:82px;width:312px;display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:16px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);overflow:auto;overscroll-behavior:contain}
-aside[hidden]{display:none}
-.zoomctl{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:82px;display:flex;flex-direction:column;gap:6px}
-.zoomctl .btn{width:40px;padding:0;font-size:18px;line-height:1}
-.zoomctl .btn#zfit{font-size:11px;font-family:var(--font-mono)}
-aside .ph{position:sticky;top:-14px;z-index:3;margin:-14px -14px 0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);border-bottom:1px solid var(--line);border-radius:16px 16px 0 0}
-aside h2{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.drop{border:1.5px dashed var(--line);border-radius:12px;padding:12px;text-align:center;color:var(--muted);font-size:13px}
-.drop.over{border-color:var(--ink);color:var(--ink);background:var(--field)}
-.chk{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:8px}
-ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
-li.pg{display:flex;align-items:center;gap:8px;padding:4px;border-radius:10px;cursor:pointer;border:1px solid transparent}
-li.pg:hover{border-color:var(--line)}
-li.pg.on{background:var(--field);border-color:var(--line)}
-li.pg img,li.pg canvas{width:40px;height:36px;border-radius:3px;box-shadow:0 0 0 1px var(--line);flex:none}
-li.pg .t{flex:1;min-width:0;font-size:13px}
-li.pg .t b{font-weight:500}
-li.pg .t span{display:block;color:var(--muted);font-size:11px;font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fld{display:grid;grid-template-columns:78px 1fr 44px;gap:8px;align-items:center;font-size:13px;margin-bottom:6px}
-.fld output{font-family:var(--font-mono);font-size:12px;text-align:right;color:var(--muted)}
-input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);border-radius:8px;background:none}
-.seg{display:flex;gap:6px}
-.seg .btn{flex:1;padding:0 6px;font-size:13px;height:32px;border-radius:10px}
-.btn[aria-pressed=true]{background:var(--btn);color:var(--btn-fg);border-color:var(--btn)}
-.seg .btn[aria-pressed=true]{background:var(--btn);color:var(--btn-fg);border-color:var(--btn)}
-.hint{font-size:12px;color:var(--muted)}
-#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:5;color:var(--ink)}
-@media (max-width:760px) and (orientation:portrait){
-  aside{top:auto;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto;height:40%;bottom:74px}
-  .state{min-width:0;font-size:11px}
-  .bar{gap:6px}
-}
-#rotate{position:fixed;inset:0;z-index:50!important;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:32px max(24px,env(safe-area-inset-left,0px));text-align:center;background:var(--bg);color:var(--ink)}
-#rotate svg{width:84px;height:84px;animation:turn 2.6s ease-in-out infinite}
-#rotate b{font-size:20px;line-height:1.25;font-weight:600;max-width:15em}
-#rotate span{color:var(--muted);font-size:14px;max-width:20em}
-@keyframes turn{0%,25%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
-@media (orientation:portrait) and (pointer:coarse) and (max-width:820px){#rotate:not(.off){display:flex}}
-@media (pointer:coarse) and (max-height:520px) and (orientation:landscape){
-  .app{padding-block:8px}
-  h1{font-size:14px}.meta{display:none}
-  .btn{height:32px;padding:0 12px}.btn.icon{width:32px;padding:0}
-  .bar{padding:4px 8px;width:min(460px,100%)}
-  aside{top:48px;bottom:56px;width:min(300px,45vw)}
-  .zoomctl{bottom:54px;gap:4px}.zoomctl .btn{width:34px;height:34px}
-}
-@media (prefers-reduced-motion:reduce){#rotate svg{animation:none}}
-@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-aside[hidden],[hidden]{display:none!important}
-.sw{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:999px;font-size:13px;pointer-events:auto;vertical-align:middle}
-.sw a{padding:5px 12px;border-radius:999px;color:inherit;text-decoration:none;white-space:nowrap}
-.sw a[aria-current]{background:#25231E;color:#F7F2E6}
-.sw a:not([aria-current]):hover{background:rgba(37,35,30,.08)}
-</style>
-
-<div class="app">
-  <div id="stage"></div>
-  <div id="rotate" role="alert">
-    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="20" y="8" width="24" height="40" rx="4"/><path d="M30 42h4"/><path d="M12 54c6 6 18 7 28 2M42 59l-3-4 5-1"/></svg>
-    <b>Переверните телефон горизонтально</b>
-    <span>Так буклет виден крупнее. Листать можно свайпом пальца влево и вправо.</span>
-    <button class="btn" id="rotateOk" type="button">Продолжить так</button>
-  </div>
-  <div id="err"><div><b>Не удалось запустить 3D.</b><br><span class="hint">Браузеру нужен WebGL. Откройте страницу в Chrome, Safari или Firefox с включённым аппаратным ускорением.</span></div></div>
-
-  <header>
-    <div>
-      <h1>Палаццо де Агой</h1>
-      <div style="margin:6px 0 4px"><nav class="sw" aria-label="Раздел"><a href="/cover/">Обложки</a><a href="/" aria-current="page">Развороты</a></nav></div>
-      <div class="meta"><span>270 × 245 мм</span> · <span id="count">0 стр.</span></div>
+<html lang="ru" class="light" data-theme="light">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Палаццо де Агой · развороты</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/heroui.min.css?v=3">
+<link rel="stylesheet" href="/ui.css?v=3">
+<body class="p-book">
+<div id="rotate" role="alert">
+  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="20" y="8" width="24" height="40" rx="4"/><path d="M30 42h4"/><path d="M12 54c6 6 18 7 28 2M42 59l-3-4 5-1"/></svg>
+  <b>Переверните телефон горизонтально</b>
+  <span>Так буклет виден крупнее. Листать можно свайпом пальца влево и вправо.</span>
+  <button class="button button--primary" id="rotateOk" type="button">Продолжить так</button>
+</div>
+<div class="shell">
+  <header class="top">
+    <div class="top__l">
+      <h1 class="brand">Палаццо де Агой</h1>
+      <nav class="tabs" aria-label="Раздел" data-orientation="horizontal"><div class="tabs__list-container"><div class="tabs__list" data-orientation="horizontal"><a class="tabs__tab" href="/cover/">Обложки<span class="tabs__indicator"></span></a><a class="tabs__tab" href="/" data-selected="true" aria-current="page">Развороты<span class="tabs__indicator"></span></a></div></div></nav>
     </div>
-    <div class="row" style="flex-wrap:nowrap"><button class="btn" id="flip" aria-pressed="false" title="Показать заднюю обложку">Сзади</button><button class="btn" id="camMode" aria-pressed="false" title="Тяните, чтобы вращать камеру. Shift или два пальца двигают сцену.">Камера</button><button class="btn" id="togglePanel" aria-expanded="true" aria-controls="panel">Страницы</button></div>
+    <div class="top__r">
+      <span class="chip mono">270 × 245 мм</span><span class="chip mono" id="count">0 стр.</span>
+      <button type="button" class="toggle-button toggle-button--sm" id="flip" aria-pressed="false" data-tip="Перевернуть буклет и показать заднюю обложку" data-tip-side="bottom">Сзади</button>
+      <button type="button" class="toggle-button toggle-button--sm" id="camMode" aria-pressed="false" data-tip="Режим камеры: тянуть — вращать сцену, а не листать" data-tip-side="bottom">Камера</button>
+      <button type="button" class="toggle-button toggle-button--sm" id="togglePanel" aria-expanded="true" aria-controls="panel" data-tip="Список страниц и настройки вида" data-tip-side="bottom">Страницы</button>
+      <button type="button" class="button button--sm button--tertiary" id="helpBtn" aria-expanded="false" aria-controls="helpPop"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.6 1.6c-.6.3-.9.7-.9 1.3"/><path d="M8 11.4v.1"/></svg><span class="lbl">Подсказки</span></button>
+    </div>
   </header>
 
-  <aside id="panel">
-    <div class="ph"><b style="font-size:13px">Страницы и настройки</b><button class="btn sm" id="closePanel" type="button">Скрыть</button></div>
-    <section>
-      <h2>Страницы</h2>
-      <p class="hint" style="margin:0 0 8px">Нажмите на страницу, чтобы перейти к ней.</p>
-      <ol id="list"></ol>
-    </section>
+  <main class="stagebox">
+    <div id="stage"></div>
+    <div id="err"><div><b>Не удалось запустить 3D.</b><br><span class="hintline">Браузеру нужен WebGL. Откройте страницу в Chrome, Safari или Firefox с включённым аппаратным ускорением.</span></div></div>
 
-    <section>
-      <h2>Обложка</h2>
-      <div class="seg" role="group" aria-label="Материал обложки" style="margin-bottom:10px">
-        <button class="btn" type="button" data-fin="gloss" aria-pressed="true">Глянец</button>
-        <button class="btn" type="button" data-fin="fabric" aria-pressed="false">Ткань</button>
-      </div>
-      <div class="fld"><label for="fc">Цвет</label><input id="fc" type="color" value="#e9e2d2" style="justify-self:start"><span></span></div>
-    </section>
+    <aside id="panel" class="card glass">
+      <div class="ph"><span>Страницы и настройки</span><button class="button button--icon-only button--sm button--ghost" id="closePanel" type="button" aria-label="Скрыть панель" data-tip="Скрыть панель"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg></button></div>
+      <section>
+        <h2 class="eyebrow">Страницы</h2>
+        <p class="hintline" style="margin:0 0 8px">Нажмите на страницу, чтобы перейти к ней.</p>
+        <ol id="list"></ol>
+      </section>
+      <section>
+        <h2 class="eyebrow">Обложка</h2>
+        <div class="toggle-button-group toggle-button-group--horizontal toggle-button-group--full-width" role="group" aria-label="Материал обложки">
+          <button type="button" class="toggle-button toggle-button--sm" data-fin="gloss" aria-pressed="true">Глянец</button>
+          <button type="button" class="toggle-button toggle-button--sm" data-fin="fabric" aria-pressed="false">Ткань</button>
+        </div>
+        <div class="fld"><label for="fc">Цвет</label><input id="fc" type="color" value="#e9e2d2" style="justify-self:start"><span></span></div>
+      </section>
+      <section>
+        <h2 class="eyebrow">Камера</h2>
+        <div class="toggle-button-group toggle-button-group--horizontal toggle-button-group--full-width" role="group" aria-label="Ракурс">
+          <button type="button" class="toggle-button toggle-button--sm" data-view="0" aria-pressed="true">Сверху</button>
+          <button type="button" class="toggle-button toggle-button--sm" data-view="1">3/4</button>
+          <button type="button" class="toggle-button toggle-button--sm" data-view="2">Низко</button>
+        </div>
+        <div class="fld"><label for="tilt">Наклон</label><input id="tilt" type="range" min="0" max="85" step="1" value="0"><output id="tilto"></output></div>
+        <div class="fld"><label for="rot">Поворот</label><input id="rot" type="range" min="-180" max="180" step="1" value="0"><output id="roto"></output></div>
+        <div class="fld"><label for="zm">Масштаб</label><input id="zm" type="range" min="66" max="500" step="1" value="100"><output id="zmo"></output></div>
+        <button class="button button--sm button--secondary button--full-width" type="button" id="camReset">Сбросить камеру</button>
+        <p class="hintline" style="margin:10px 0 0">Правая кнопка мыши вращает сцену, Shift или средняя кнопка двигают её. Когда буклет приближен, один палец двигает его, а листать можно стрелками.</p>
+      </section>
+    </aside>
 
-    <section>
-      <h2>Камера</h2>
-      <div class="seg" role="group" aria-label="Ракурс" style="margin-bottom:10px">
-        <button class="btn" type="button" data-view="0" aria-pressed="true">Сверху</button>
-        <button class="btn" type="button" data-view="1">3/4</button>
-        <button class="btn" type="button" data-view="2">Низко</button>
-      </div>
-      <div class="fld"><label for="tilt">Наклон</label><input id="tilt" type="range" min="0" max="85" step="1" value="0"><output id="tilto"></output></div>
-      <div class="fld"><label for="rot">Поворот</label><input id="rot" type="range" min="-180" max="180" step="1" value="0"><output id="roto"></output></div>
-      <div class="fld"><label for="zm">Масштаб</label><input id="zm" type="range" min="66" max="500" step="1" value="100"><output id="zmo"></output></div>
-      <button class="btn" type="button" id="camReset" style="width:100%">Сбросить камеру</button>
-      <p class="hint" style="margin:8px 0 0">Кнопка «Камера» вверху переключает: тянуть страницу или вращать сцену. Правая кнопка мыши всегда вращает, Shift или средняя кнопка двигают сцену, колесо, щипок или кнопки «+» и «−» слева меняют масштаб. Когда буклет приближен, один палец двигает его, листать можно стрелками и кнопками. Стрелки листают.</p>
-    </section>
-  </aside>
+    <div class="zoomctl" role="group" aria-label="Масштаб">
+      <button class="button button--icon-only fab" id="zin" type="button" aria-label="Приблизить" data-tip="Приблизить" data-tip-side="right"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
+      <button class="button button--icon-only fab" id="zfit" type="button" aria-label="Вписать в экран" data-tip="Вписать в экран">100%</button>
+      <button class="button button--icon-only fab" id="zout" type="button" aria-label="Отдалить" data-tip="Отдалить"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8h10"/></svg></button>
+    </div>
 
-  <div class="zoomctl" role="group" aria-label="Масштаб">
-    <button class="btn" id="zin" type="button" aria-label="Приблизить">+</button>
-    <button class="btn" id="zfit" type="button" aria-label="Вписать в экран" title="Вписать в экран">100%</button>
-    <button class="btn" id="zout" type="button" aria-label="Отдалить">−</button>
-  </div>
-
-  <div class="bar">
-    <button class="btn icon" id="prev" aria-label="Назад">‹</button>
-    <input id="scrub" type="range" min="0" max="3" step="0.01" value="0" aria-label="Положение в буклете">
-    <button class="btn icon" id="next" aria-label="Вперёд">›</button>
-    <span class="state" id="state" aria-live="polite">Обложка</span>
-  </div>
+    <div class="bar glass pill">
+      <button class="button button--icon-only button--sm button--ghost" id="prev" aria-label="Назад" data-tip="Предыдущий разворот · ←"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg></button>
+      <input id="scrub" type="range" min="0" max="3" step="0.01" value="0" aria-label="Положение в буклете">
+      <button class="button button--icon-only button--sm button--ghost" id="next" aria-label="Вперёд" data-tip="Следующий разворот · →"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button>
+      <span class="state" id="state" aria-live="polite">Обложка</span>
+    </div>
+  </main>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -836,5 +741,10 @@ window.__booklet={cam:function(z,t,py,ph){zoom=z;camTh=t;th=t;panY=py||0;if(ph!=
 requestAnimationFrame(frame);
 })();
 </script>
-
+<div class="popover" id="helpPop" role="dialog" aria-label="Как листать буклет" hidden><div class="popover__dialog">
+  <h2 class="popover__heading">Как листать буклет</h2>
+  <ul class="help"><li><span class="k"><kbd class="kbd">Тянуть</kbd></span><span>Возьмите страницу за край и переверните. На телефоне — свайп.</span></li><li><span class="k"><kbd class="kbd">←</kbd><kbd class="kbd">→</kbd></span><span>Листайте стрелками или кнопками внизу, ползунок перематывает.</span></li><li><span class="k"><kbd class="kbd">Колесо</kbd><kbd class="kbd">+ −</kbd></span><span>Приближайте, чтобы рассмотреть детали разворота.</span></li><li><span class="k"><kbd class="kbd">Камера</kbd></span><span>Включите, чтобы вращать сцену и посмотреть буклет под углом.</span></li><li><span class="k"><kbd class="kbd">Страницы</kbd></span><span>Справа список страниц: нажмите, чтобы перейти к нужной.</span></li><li><span class="k"><kbd class="kbd">Обложки</kbd></span><span>Вверху можно перейти к вариантам обложки в 3D.</span></li></ul>
+  <button type="button" class="button button--primary button--sm button--full-width" id="helpOk">Понятно</button>
+</div></div>
+<script src="/ui.js?v=3"></script>
 </html>
