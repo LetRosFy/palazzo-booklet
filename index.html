@@ -6,8 +6,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/heroui.min.css?v=3">
-<link rel="stylesheet" href="/ui.css?v=3">
+<link rel="stylesheet" href="/heroui.min.css?v=4">
+<link rel="stylesheet" href="/ui.css?v=4">
 <body class="p-book">
 <div id="rotate" role="alert">
   <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="20" y="8" width="24" height="40" rx="4"/><path d="M30 42h4"/><path d="M12 54c6 6 18 7 28 2M42 59l-3-4 5-1"/></svg>
@@ -25,6 +25,7 @@
       <span class="chip mono">270 × 245 мм</span><span class="chip mono" id="count">0 стр.</span>
       <button type="button" class="toggle-button toggle-button--sm" id="flip" aria-pressed="false" data-tip="Перевернуть буклет и показать заднюю обложку" data-tip-side="bottom">Сзади</button>
       <button type="button" class="toggle-button toggle-button--sm" id="camMode" aria-pressed="false" data-tip="Режим камеры: тянуть — вращать сцену, а не листать" data-tip-side="bottom">Камера</button>
+      <button type="button" class="toggle-button toggle-button--sm" id="studioB" aria-pressed="false" data-tip="Посмотреть буклет на тёмном фоне" data-tip-side="bottom">Тёмный фон</button>
       <button type="button" class="toggle-button toggle-button--sm" id="togglePanel" aria-expanded="true" aria-controls="panel" data-tip="Список страниц и настройки вида" data-tip-side="bottom">Страницы</button>
       <button type="button" class="button button--sm button--tertiary" id="helpBtn" aria-expanded="false" aria-controls="helpPop"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.6 1.6c-.6.3-.9.7-.9 1.3"/><path d="M8 11.4v.1"/></svg><span class="lbl">Подсказки</span></button>
     </div>
@@ -746,5 +747,5 @@ requestAnimationFrame(frame);
   <ul class="help"><li><span class="k"><kbd class="kbd">Тянуть</kbd></span><span>Возьмите страницу за край и переверните. На телефоне — свайп.</span></li><li><span class="k"><kbd class="kbd">←</kbd><kbd class="kbd">→</kbd></span><span>Листайте стрелками или кнопками внизу, ползунок перематывает.</span></li><li><span class="k"><kbd class="kbd">Колесо</kbd><kbd class="kbd">+ −</kbd></span><span>Приближайте, чтобы рассмотреть детали разворота.</span></li><li><span class="k"><kbd class="kbd">Камера</kbd></span><span>Включите, чтобы вращать сцену и посмотреть буклет под углом.</span></li><li><span class="k"><kbd class="kbd">Страницы</kbd></span><span>Справа список страниц: нажмите, чтобы перейти к нужной.</span></li><li><span class="k"><kbd class="kbd">Обложки</kbd></span><span>Вверху можно перейти к вариантам обложки в 3D.</span></li></ul>
   <button type="button" class="button button--primary button--sm button--full-width" id="helpOk">Понятно</button>
 </div></div>
-<script src="/ui.js?v=3"></script>
+<script src="/ui.js?v=4"></script>
 </html>

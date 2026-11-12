@@ -64,6 +64,14 @@
   document.addEventListener('pointerdown', hideTip, true);
   window.addEventListener('scroll', hideTip, true);
 
+  // Тёмный фон сцены на странице разворотов (на странице обложек им управляет сама сцена)
+  var sb = document.getElementById('studioB');
+  if (sb) sb.addEventListener('click', function () {
+    var dark = document.body.getAttribute('data-studio') !== 'dark';
+    document.body.setAttribute('data-studio', dark ? 'dark' : 'light');
+    sb.setAttribute('aria-pressed', String(dark));
+  });
+
   // 3. Окно «Как пользоваться»: открывается кнопкой и само при первом визите
   var btn = document.getElementById('helpBtn'), pop = document.getElementById('helpPop');
   if (btn && pop) {
