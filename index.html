@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ru">
-<title>Буклет 3D</title>
+<title>Палаццо де Агой · буклет</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;1,300&family=IBM+Plex+Mono:wght@400&display=swap">
 <style>
@@ -102,7 +102,12 @@ input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);
 }
 @media (prefers-reduced-motion:reduce){#rotate svg{animation:none}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-aside[hidden],[hidden]{display:none!important}</style>
+aside[hidden],[hidden]{display:none!important}
+.sw{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:999px;font-size:13px;pointer-events:auto;vertical-align:middle}
+.sw a{padding:5px 12px;border-radius:999px;color:inherit;text-decoration:none;white-space:nowrap}
+.sw a[aria-current]{background:#25231E;color:#F7F2E6}
+.sw a:not([aria-current]):hover{background:rgba(37,35,30,.08)}
+</style>
 
 <div class="app">
   <div id="stage"></div>
@@ -116,7 +121,8 @@ aside[hidden],[hidden]{display:none!important}</style>
 
   <header>
     <div>
-      <h1>Буклет 3D</h1>
+      <h1>Палаццо де Агой</h1>
+      <div style="margin:6px 0 4px"><nav class="sw" aria-label="Раздел"><a href="/cover/">Обложки</a><a href="/" aria-current="page">Развороты</a></nav></div>
       <div class="meta"><span>270 × 245 мм</span> · <span id="count">0 стр.</span></div>
     </div>
     <div class="row" style="flex-wrap:nowrap"><button class="btn" id="flip" aria-pressed="false" title="Показать заднюю обложку">Сзади</button><button class="btn" id="camMode" aria-pressed="false" title="Тяните, чтобы вращать камеру. Shift или два пальца двигают сцену.">Камера</button><button class="btn" id="togglePanel" aria-expanded="true" aria-controls="panel">Страницы</button></div>
