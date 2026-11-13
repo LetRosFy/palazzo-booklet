@@ -7,13 +7,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/heroui.min.css?v=12">
-<link rel="stylesheet" href="/ui.css?v=12">
-<link rel="stylesheet" href="/media.css?v=3">
+<link rel="stylesheet" href="/ui.css?v=13">
+<link rel="stylesheet" href="/media.css?v=4">
 <body class="p-item">
 <div class="shell">
   <header class="top">
     <div class="top__l">
-      <h1 class="brand"><a href="/" title="Ко всем носителям"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Палаццо де Агой</a></h1>
+      <h1 class="brand"><a href="/" data-tip="Ко всем носителям"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Палаццо де Агой</a></h1>
     </div>
     <div class="top__r"><span class="chip mono" id="sizeChip"></span><span class="chip chip--sm" id="stChip"></span><button type="button" class="button button--sm button--tertiary" id="helpBtn" aria-expanded="false" aria-controls="hints"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.6 1.6c-.6.3-.9.7-.9 1.3"/><path d="M8 11.4v.1"/></svg><span class="lbl">Подсказки</span></button></div>
   </header>
@@ -47,6 +47,7 @@
     </div>
 
     <aside class="card card--default info" id="info" aria-label="О носителе">
+      <button type="button" class="sheet__handle" id="sheetHandle" aria-label="Развернуть или свернуть сведения"><span class="sheet__handle-bar"></span></button>
       <div class="info__head"><p class="eyebrow" id="grp"></p><h2 id="title"></h2><p id="lead"></p></div>
       <div class="tabs" data-orientation="horizontal"><div class="tabs__list-container"><div class="tabs__list" role="tablist" aria-label="Сведения о носителе" data-orientation="horizontal" id="tabs">
         <button type="button" class="tabs__tab" role="tab" id="t-spec" aria-controls="p-spec" aria-selected="true">Данные<span class="tabs__indicator"></span></button>
@@ -58,7 +59,7 @@
       <div class="pane" id="p-spec" role="tabpanel" aria-labelledby="t-spec"><dl id="spec"></dl></div>
 
       <div class="pane" id="p-opt" role="tabpanel" aria-labelledby="t-opt" hidden>
-        <div class="opt" id="optBase"><span>Цвет основы <b id="baseName"></b></span><div class="sws" id="sws" role="group" aria-label="Цвет основы"></div></div>
+        <div class="opt" id="optBase"><span>Цвет основы <b id="baseName"></b></span><div class="color-swatch-picker" id="sws" role="group" aria-label="Цвет основы"></div></div>
         <div class="opt"><span>Логотип</span><div class="toggle-button-group toggle-button-group--horizontal toggle-button-group--full-width" role="group" aria-label="Способ нанесения логотипа" id="optLogo"></div></div>
         <div class="opt"><span>Покрытие</span><div class="toggle-button-group toggle-button-group--horizontal toggle-button-group--full-width" role="group" aria-label="Покрытие" id="optCoat"></div></div>
         <button type="button" class="button button--sm button--tertiary" id="optReset">Вернуть как в варианте</button>
@@ -92,8 +93,8 @@
     </aside>
   </div>
 </div>
-<aside class="card hints" id="hints" aria-label="Подсказки" hidden>
-  <h2>Как пользоваться</h2>
+<aside class="popover hints" id="hints" aria-label="Подсказки" data-placement="bottom" hidden><div class="popover__dialog" role="dialog" aria-labelledby="hintsH">
+  <h2 class="popover__heading" id="hintsH">Как пользоваться</h2>
   <ul>
     <li><b>Вращать</b><span>Тяните модель мышью или пальцем. Колесо и два пальца меняют масштаб.</span></li>
     <li><b>Варианты</b><span>Лента под сценой или стрелки ← → на клавиатуре.</span></li>
@@ -102,13 +103,12 @@
     <li><b>Носители</b><span>Название в шапке открывает список, стрелки рядом ведут к соседним.</span></li>
   </ul>
   <button type="button" class="button button--sm button--primary" id="hintsOk">Понятно</button>
-</aside>
-<div class="toast" id="toast" role="status" hidden></div>
+</div></aside>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/api/catalog"></script>
 <script src="/vendor/GLTFLoader.js"></script>
-<script src="/media.js?v=6"></script>
+<script src="/media.js?v=7"></script>
 <script>
 (function () {
   'use strict';
@@ -118,7 +118,7 @@
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
-  function say(t) { var x = $('toast'); x.textContent = t; x.hidden = false; clearTimeout(say.t); say.t = setTimeout(function () { x.hidden = true; }, 2200); }
+  var say = P.toast;
 
   // ───── состояние: вариант + примерка отделки ─────
   var vi = Math.max(0, Math.min(it.variants.length - 1, (parseInt(q.get('v'), 10) || 1) - 1));
@@ -170,14 +170,18 @@
     b.addEventListener('click', function () { tab(mq.matches && curTab === b ? null : b); });
     b.addEventListener('keydown', function (e) { var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return; var n = tabs[(i + d + tabs.length) % tabs.length]; tab(n); n.focus(); e.stopPropagation(); });
   });
+  // на телефоне панель сведений — Sheet из HeroUI; ручка сверху сворачивает и разворачивает
+  function sheetMode() { var i = $('info'), on = mq.matches; i.classList.toggle('sheet__dialog', on); i.classList.toggle('sheet__dialog--bottom', on); i.classList.toggle('card', !on); i.classList.toggle('card--default', !on); }
+  sheetMode();
+  $('sheetHandle').addEventListener('click', function () { tab(curTab ? null : $(P.store('tab') || '') || tabs[0]); });
   function initTab() { tab(mq.matches ? null : $(P.store('tab') || '') || tabs[0]); }
   initTab();
-  (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(function () { if (!mq.matches && !curTab) initTab(); });
+  (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(function () { sheetMode(); if (!mq.matches && !curTab) initTab(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mq.matches && curTab) tab(null); });
   $('toFiles').addEventListener('click', function () { tab($('t-files')); $('p-files').scrollIntoView({ block: 'nearest' }); });
 
   // подсказки: сами показываются при первом визите
-  function hints(on) { $('hints').hidden = !on; $('helpBtn').setAttribute('aria-expanded', on ? 'true' : 'false'); if (!on) P.store('hints', '1'); }
+  function hints(on) { if (on) { $('hints').setAttribute('data-entering', 'true'); setTimeout(function () { $('hints').removeAttribute('data-entering'); }, 200); } $('hints').hidden = !on; $('helpBtn').setAttribute('aria-expanded', on ? 'true' : 'false'); if (!on) P.store('hints', '1'); }
   $('helpBtn').addEventListener('click', function () { hints($('hints').hidden); });
   $('hintsOk').addEventListener('click', function () { hints(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('hints').hidden) hints(false); });
@@ -193,7 +197,9 @@
   }
   group($('optLogo'), P.LOGO, 'logo'); group($('optCoat'), P.COAT, 'coat');
   P.PALETTE.forEach(function (c) {
-    var b = el('button', 'swb'); b.type = 'button'; b.style.background = c.hex; b.setAttribute('data-val', c.id); b.setAttribute('aria-label', c.name); b.title = c.name;
+    var b = el('button', 'color-swatch-picker__item'); b.type = 'button'; b.style.setProperty('--color-swatch-current', c.hex); b.setAttribute('data-val', c.id); b.setAttribute('aria-label', c.name); b.setAttribute('data-tip', c.name);
+    b.appendChild(el('span', 'color-swatch-picker__swatch color-swatch color-swatch--circle'));
+    var ind = el('span', 'color-swatch-picker__indicator'); ind.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="' + (parseInt(c.hex.slice(1, 3), 16) > 150 ? '#131313' : '#fff') + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg>'; b.appendChild(ind);
     if (it.fixedBase) b.disabled = c.id !== it.fixedBase;
     b.addEventListener('click', function () { opt.base = c.id; apply(); });
     $('sws').appendChild(b);

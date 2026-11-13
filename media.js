@@ -850,25 +850,32 @@
     var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'button button--sm button--secondary inav__btn';
     btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-label', 'Выбрать носитель');
     btn.innerHTML = '<span>' + (cur ? cur.name : 'Носители') + '</span>' + CH.replace('{d}', 'm4 6 4 4 4-4');
-    var menu = document.createElement('div'); menu.className = 'inav__menu card'; menu.hidden = true;
+    // Dropdown + Menu из HeroUI
+    var menu = document.createElement('div'); menu.className = 'inav__menu dropdown__popover'; menu.hidden = true; menu.setAttribute('data-placement', 'bottom');
+    var list = document.createElement('div'); list.className = 'menu'; list.setAttribute('role', 'menu'); menu.appendChild(list);
+    function entry(hrefTo, label, desc, cls) {
+      var a = document.createElement('a'); a.className = 'menu-item' + (cls ? ' ' + cls : ''); a.href = hrefTo; a.setAttribute('role', 'menuitem');
+      var l = document.createElement('span'); l.setAttribute('data-slot', 'label'); l.textContent = label; a.appendChild(l);
+      if (desc) { var d = document.createElement('span'); d.setAttribute('data-slot', 'description'); d.textContent = desc; a.appendChild(d); }
+      return a;
+    }
     GROUPS.forEach(function (g) {
-      var list = ITEMS.filter(function (x) { return x.group === g.id; }); if (!list.length) return;
-      var h = document.createElement('p'); h.className = 'eyebrow'; h.textContent = g.name; menu.appendChild(h);
-      list.forEach(function (x) {
-        var a = document.createElement('a'); a.href = href(x); a.textContent = x.name;
-        var sm = document.createElement('small'); sm.textContent = x.size; a.appendChild(sm);
-        if (x.id === curId) a.setAttribute('aria-current', 'page'); menu.appendChild(a);
-      });
+      var items = ITEMS.filter(function (x) { return x.group === g.id; }); if (!items.length) return;
+      var sec = document.createElement('div'); sec.className = 'menu-section'; sec.setAttribute('role', 'group'); sec.setAttribute('aria-label', g.name);
+      var h = document.createElement('p'); h.className = 'eyebrow'; h.textContent = g.name; sec.appendChild(h);
+      items.forEach(function (x) { var a = entry(href(x), x.name, x.size); if (x.id === curId) a.setAttribute('aria-current', 'page'); sec.appendChild(a); });
+      list.appendChild(sec);
     });
-    var kit = document.createElement('a'); kit.href = '/kit/'; kit.className = 'inav__kit'; kit.textContent = 'Комплект: все носители на столе'; menu.appendChild(kit);
-    function open(on) { menu.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); }
+    var sep = document.createElement('div'); sep.className = 'separator separator--horizontal'; sep.setAttribute('data-slot', 'separator'); list.appendChild(sep);
+    list.appendChild(entry('/kit/', 'Комплект: все носители на столе', '', 'inav__kit'));
+    function open(on) { if (on) { menu.setAttribute('data-entering', 'true'); setTimeout(function () { menu.removeAttribute('data-entering'); }, 200); } menu.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); }
     btn.addEventListener('click', function (e) { e.stopPropagation(); open(menu.hidden); });
     document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) open(false); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { open(false); btn.focus(); } });
     wrap.appendChild(btn); wrap.appendChild(menu);
     if (i >= 0) [[-1, 'M10 3 5 8l5 5', 'Предыдущий носитель'], [1, 'm6 3 5 5-5 5', 'Следующий носитель']].forEach(function (d) {
       var t = ITEMS[(i + d[0] + ITEMS.length) % ITEMS.length], a = document.createElement('a');
-      a.className = 'button button--icon-only button--sm button--tertiary inav__step'; a.href = href(t); a.title = d[2] + ': ' + t.name; a.setAttribute('aria-label', d[2] + ': ' + t.name);
+      a.className = 'button button--icon-only button--sm button--tertiary inav__step'; a.href = href(t); a.setAttribute('data-tip', d[2] + ': ' + t.name); a.setAttribute('aria-label', d[2] + ': ' + t.name);
       a.innerHTML = CH.replace('{d}', d[1]); wrap.appendChild(a);
     });
     if (before) host.insertBefore(wrap, before); else host.appendChild(wrap);
@@ -876,7 +883,37 @@
 
   if (window.PDA_DATA && window.PDA_DATA.items && !window.PDA_ADMIN) { try { applyData(window.PDA_DATA); } catch (e) { if (window.console) console.error(e); } }
 
+  /* Toast из HeroUI */
+  var toastT = 0;
+  function toast(text) {
+    var reg = document.querySelector('.toast-region');
+    if (!reg) { reg = document.createElement('div'); reg.className = 'toast-region toast-region--bottom'; reg.setAttribute('role', 'region'); reg.setAttribute('aria-label', 'Уведомления'); document.body.appendChild(reg); }
+    reg.innerHTML = '';
+    var t = document.createElement('div'); t.className = 'toast toast--bottom'; t.setAttribute('role', 'status'); t.setAttribute('data-frontmost', 'true'); t.setAttribute('data-entering', 'true');
+    var c = document.createElement('div'); c.className = 'toast__content'; var tt = document.createElement('div'); tt.className = 'toast__title'; tt.textContent = text; c.appendChild(tt); t.appendChild(c); reg.appendChild(t);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { t.removeAttribute('data-entering'); }); });
+    clearTimeout(toastT); toastT = setTimeout(function () { t.setAttribute('data-exiting', 'true'); setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 260); }, 2400);
+  }
+  /* Tooltip из HeroUI для элементов с data-tip (на страницах буклета и обложек этим занимается ui.js) */
+  function tips() {
+    if (/\bp-(book|cover)\b/.test(document.body.className) || document.querySelector('.pda-tip')) return;
+    var tip = document.createElement('div'); tip.className = 'tooltip pda-tip'; tip.setAttribute('role', 'tooltip'); tip.hidden = true; document.body.appendChild(tip);
+    function show(el) {
+      tip.textContent = el.getAttribute('data-tip'); tip.hidden = false;
+      var r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, below = r.top < h + 16;
+      tip.setAttribute('data-placement', below ? 'bottom' : 'top'); tip.setAttribute('data-entering', 'true');
+      tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px'; tip.style.top = (below ? r.bottom + 8 : r.top - h - 8) + 'px';
+    }
+    function hide() { tip.hidden = true; }
+    function target(e) { return e.target.closest ? e.target.closest('[data-tip]') : null; }
+    document.addEventListener('pointerover', function (e) { var el = target(e); if (el && e.pointerType === 'mouse') show(el); else if (!el) hide(); });
+    document.addEventListener('focusin', function (e) { var el = target(e); if (el && el.matches(':focus-visible')) show(el); });
+    document.addEventListener('focusout', hide); document.addEventListener('pointerdown', hide); window.addEventListener('scroll', hide, true);
+  }
+  if (document.body) tips(); else document.addEventListener('DOMContentLoaded', tips);
+
   window.PDA = {
+    toast: toast,
     STATUS: STATUS, href: href, filesState: filesState, store: store, mountNav: mountNav,
     PALETTE: PALETTE, LOGO: LOGO, COAT: COAT, GROUPS: GROUPS, ITEMS: ITEMS, DEFAULTS: DEFAULTS, STUB_DESC: STUB_DESC,
     item: function (id) { for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].id === id) return ITEMS[i]; return null; },
