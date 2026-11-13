@@ -6,7 +6,7 @@
   var P = window.PDA, app = document.getElementById('app');
   var S = { user: null, items: [], etag: null, users: [], usage: null, sel: null, tab: 'items', dirty: false, saving: false, busy: 0, trash: [], conflict: false, baseUrl: '', mediaPrefix: 'media/', maxFile: 0 };
   var DEF = {}; P.DEFAULTS.forEach(function (d) { DEF[d.id] = d; });
-  var SHAPES = [['slab', 'Лист или карта'], ['pad', 'Блокнот, книга'], ['tent', 'Настольный домик'], ['bag', 'Пакет'], ['mug', 'Кружка']];
+  var SHAPES = [['slab', 'Лист или карта'], ['sheets', 'Стопка листов'], ['cards', 'Стопка карточек'], ['postcards', 'Открытки'], ['envelope', 'Конверт'], ['folder', 'Папка'], ['notebook', 'Блокнот'], ['tent', 'Настольный домик'], ['bag', 'Пакет'], ['mug', 'Кружка']];
   var ROLES = { owner: 'Владелец', editor: 'Редактор' };
   var FILE_EXT = /\.(pdf|ai|eps|indd|idml|psd|svg|png|jpe?g|webp|tiff?|zip)$/i;
   var PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
@@ -104,7 +104,7 @@
   }
   function isSection(it) { return !!(DEF[it.id] && DEF[it.id].href); }
   function modelOf(it) { return it.custom ? it.model : DEF[it.id] && DEF[it.id].model; }
-  function aspectOf(it) { var m = modelOf(it); if (!m || m.type === 'book') return null; return m.type === 'mug' ? 2 * Math.PI * m.r / m.h : m.w / m.h; }
+  function aspectOf(it) { var m = modelOf(it); if (!m || m.type === 'book') return null; return m.type === 'mug' ? 2 * Math.PI * m.r / (m.h - 9) : m.w / m.h; }
   function cur() { for (var i = 0; i < S.items.length; i++) if (S.items[i].id === S.sel) return S.items[i]; return null; }
   function dirty() { if (!S.dirty) { S.dirty = true; } paintBar(); }
   function drop(url) { if (isOurs(url)) S.trash.push(url); }
@@ -372,13 +372,13 @@
       { key: 'type', label: 'Форма для 3D', options: SHAPES, value: 'slab' },
       { key: 'w', label: 'Ширина, мм (для кружки — диаметр)', type: 'number', value: 210 },
       { key: 'h', label: 'Высота, мм', type: 'number', value: 297 },
-      { key: 't', label: 'Толщина, мм (для пакета — глубина)', type: 'number', value: 1 }
+      { key: 't', label: 'Толщина, мм (лист, блокнот; для пакета — глубина)', type: 'number', value: 1 }
     ], 'Создать', function (v) {
       var name = v.name.trim(), w = +v.w, hh = +v.h, t = +v.t, id = slug(name) || 'item', n = 2;
       if (!name) throw new Error('Укажите название');
       if (!(w > 0 && hh > 0 && t > 0)) throw new Error('Размеры должны быть больше нуля');
       while (S.items.some(function (x) { return x.id === id; }) || DEF[id]) id = (slug(name) || 'item').slice(0, 33) + '-' + n++;
-      var m = v.type === 'mug' ? { type: 'mug', r: w / 2, h: hh } : v.type === 'bag' ? { type: 'bag', w: w, h: hh, d: t } : v.type === 'tent' ? { type: 'tent', w: w, h: hh } : { type: v.type, w: w, h: hh, t: t, face: 'center' };
+      var m = v.type === 'mug' ? { type: 'mug', r: w / 2, h: hh } : v.type === 'bag' ? { type: 'bag', w: w, h: hh, d: t } : v.type === 'slab' ? { type: 'slab', w: w, h: hh, t: t, face: 'center' } : v.type === 'notebook' ? { type: 'notebook', w: w, h: hh, t: t } : { type: v.type, w: w, h: hh };
       var size = v.type === 'mug' ? '⌀ ' + w + ' × ' + hh + ' мм' : w + ' × ' + hh + (v.type === 'bag' ? ' × ' + t : '') + ' мм';
       S.items.push({ id: id, custom: true, model: m, group: v.group, name: name, size: size, desc: '', status: 'draft', hidden: false, front: '', back: '',
         spec: [['Формат', size], ['Материал', ''], ['Печать', ''], ['Отделка', ''], ['Тираж', '']],

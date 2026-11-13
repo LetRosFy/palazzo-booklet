@@ -23,11 +23,11 @@ const num = (v, min, max) => { v = Number(v); return isFinite(v) ? Math.min(max,
 const ID = /^[a-z0-9][a-z0-9-]{0,39}$/;
 function cleanModel(m) {
   m = m || {};
-  const type = ['slab', 'pad', 'tent', 'bag', 'mug'].indexOf(m.type) >= 0 ? m.type : 'slab';
+  const type = ['slab', 'sheets', 'cards', 'postcards', 'envelope', 'folder', 'notebook', 'keycard', 'tent', 'bag', 'mug'].indexOf(m.type) >= 0 ? m.type : 'slab';
   if (type === 'mug') return { type, r: num(m.r, 10, 300), h: num(m.h, 10, 600) };
   const o = { type, w: num(m.w, 10, 2000), h: num(m.h, 10, 2000) };
   if (type === 'bag') o.d = num(m.d, 10, 1000);
-  if (type === 'slab' || type === 'pad') o.t = num(m.t, 0.2, 200);
+  if (type === 'slab' || type === 'notebook') o.t = num(m.t, type === 'slab' ? 0.2 : 4, 200);
   if (type === 'slab') { o.face = ['card', 'letter', 'envelope', 'center', 'postcard'].indexOf(m.face) >= 0 ? m.face : 'center'; if (m.r) o.r = num(m.r, 0, 100); }
   return o;
 }
