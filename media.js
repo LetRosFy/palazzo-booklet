@@ -80,6 +80,36 @@
     stub('mug', 'gifts', 'Кружка', '330 мл · ⌀ 82 мм', { type: 'mug', r: 41, h: 95 })
   ];
 
+  /* ───── данные из админки (/admin) ─────
+     /api/catalog кладёт в window.PDA_DATA то, что сохранили в админке: тексты, статусы, варианты, макеты и файлы.
+     Встроенный каталог выше остаётся основой и запасным вариантом, если данные недоступны. */
+  var STUB_DESC = stub('', '', '', '', {}).desc;
+  var DEFAULTS = JSON.parse(JSON.stringify(ITEMS));
+  function hasArt(it) { return !!(it.front || it.back || (it.variants || []).some(function (v) { return v.front || v.back; })); }
+  function applyData(data) {
+    var byId = {}; ITEMS.forEach(function (it) { byId[it.id] = it; });
+    (data.items || []).forEach(function (d) {
+      var it = byId[d.id];
+      if (!it) { if (!d.custom || !d.model || !BUILD[d.model.type]) return; it = stub(d.id, d.group, d.name, d.size, d.model); it.custom = true; ITEMS.push(it); byId[d.id] = it; }
+      ['name', 'size', 'desc', 'status', 'group', 'front', 'back', 'fixedBase'].forEach(function (k) { if (d[k] != null && (d[k] !== '' || k === 'desc' || k === 'front' || k === 'back')) it[k] = d[k]; });
+      if (!STATUS[it.status]) it.status = 'draft';
+      if (!GROUPS.some(function (g) { return g.id === it.group; })) it.group = GROUPS[0].id;
+      it.hidden = !!d.hidden;
+      if (it.href) return; // буклет и обложки: у них свои страницы, из админки меняются только подписи и статус
+      if (d.spec) it.spec = d.spec;
+      if (d.variants && d.variants.length) it.variants = d.variants;
+      if (d.files) it.files = d.files;
+      it.stub = !hasArt(it);
+      if (!it.stub && it.desc === STUB_DESC) it.desc = '';
+    });
+    if (data.order && data.order.length) {
+      var pos = {}; data.order.forEach(function (id, i) { pos[id] = i; });
+      ITEMS.forEach(function (it, i) { it._i = i; });
+      ITEMS.sort(function (a, b) { return (pos[a.id] != null ? pos[a.id] : 1000 + a._i) - (pos[b.id] != null ? pos[b.id] : 1000 + b._i); });
+    }
+    for (var i = ITEMS.length - 1; i >= 0; i--) if (ITEMS[i].hidden) ITEMS.splice(i, 1);
+  }
+
   /* ───── цвет ───── */
   function hexOf(id) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].id === id) return PALETTE[i].hex; return id && id[0] === '#' ? id : '#FEEEDA'; }
   function rgb(hex) { var n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
@@ -185,6 +215,12 @@
     }
     return m;
   }
+  /* Загруженный макет вместо условной грани */
+  function artMat(url, s, redraw) { return new T.MeshStandardMaterial({ map: loadTex(url, redraw), roughness: s.coat === 'gloss' ? 0.36 : 0.9, metalness: 0 }); }
+  function face(m, s, it, redraw, back, painter, label) {
+    var url = back ? s.art.back : s.art.front;
+    return url ? artMat(url, s, redraw) : faceMaterial(m.w, m.h, painter, s, back, label);
+  }
   function plain(color, rough) { return new T.MeshStandardMaterial({ color: new T.Color(color), roughness: rough == null ? 0.9 : rough, metalness: 0 }); }
 
   /* ───── геометрия ───── */
@@ -218,11 +254,11 @@
   var BUILD = {
     slab: function (m, s, it, redraw) {
       var edge = plain(mix(s.base, '#ffffff', s.dark ? 0.12 : 0.4));
-      return slab(m.w, m.h, m.t, m.r, faceMaterial(m.w, m.h, m.face, s, false, it.stub), faceMaterial(m.w, m.h, m.face, s, true), edge);
+      return slab(m.w, m.h, m.t, m.r, face(m, s, it, redraw, false, m.face, it.stub), face(m, s, it, redraw, true, m.face), edge);
     },
-    pad: function (m, s, it) {
+    pad: function (m, s, it, redraw) {
       var w = m.w * U, h = m.h * U, t = m.t * U, pages = plain('#F4EEE2'), cover = plain(s.base, s.coat === 'gloss' ? 0.36 : 0.9);
-      var mesh = new T.Mesh(new T.BoxGeometry(w, h, t), [pages, cover, pages, pages, faceMaterial(m.w, m.h, 'center', s, false, it.stub), faceMaterial(m.w, m.h, 'card', s, true)]);
+      var mesh = new T.Mesh(new T.BoxGeometry(w, h, t), [pages, cover, pages, pages, face(m, s, it, redraw, false, 'center', it.stub), face(m, s, it, redraw, true, 'card')]);
       var g = new T.Group(); g.add(mesh); return g;
     },
     book: function (m, s, it, redraw) {
@@ -230,20 +266,20 @@
       var img = function (u) { return u ? new T.MeshStandardMaterial({ map: loadTex(u, redraw), roughness: 0.6 }) : tint; };
       var g = new T.Group(); g.add(new T.Mesh(new T.BoxGeometry(w, h, t), [pages, img(m.spine), pages, pages, img(m.front), img(m.back)])); return g;
     },
-    tent: function (m, s, it) {
+    tent: function (m, s, it, redraw) {
       var g = new T.Group(), a = 0.33, hh = m.h * U, edge = plain(mix(s.base, '#ffffff', 0.2));
-      var f = slab(m.w, m.h, 1.2, 0, faceMaterial(m.w, m.h, 'calendar', s, false, it.stub), plain(s.base), edge);
-      var b = slab(m.w, m.h, 1.2, 0, faceMaterial(m.w, m.h, 'center', s, true), plain(s.base), edge);
+      var f = slab(m.w, m.h, 1.2, 0, face(m, s, it, redraw, false, 'calendar', it.stub), plain(s.base), edge);
+      var b = slab(m.w, m.h, 1.2, 0, s.art.back ? artMat(s.art.back, s, redraw) : faceMaterial(m.w, m.h, 'center', s, true), plain(s.base), edge);
       var dz = Math.sin(a) * hh / 2;
       f.rotation.x = -a; f.position.z = dz; b.rotation.y = Math.PI; b.rotation.x = a; b.position.z = -dz;
       var base = new T.Mesh(new T.BoxGeometry(m.w * U, 0.012, dz * 4), edge); base.position.y = -Math.cos(a) * hh / 2;
       g.add(f, b, base); return g;
     },
-    bag: function (m, s, it) {
+    bag: function (m, s, it, redraw) {
       var w = m.w * U, h = m.h * U, d = m.d * U, side = plain(mix(s.base, '#000000', 0.06), s.coat === 'gloss' ? 0.36 : 0.9), top = plain(mix(s.base, '#000000', 0.45));
       var paint = function (c, W, H, k) { k.ink(); wordmark(c, W / 2, H * 0.52, W * 0.5); };
       var g = new T.Group();
-      g.add(new T.Mesh(new T.BoxGeometry(w, h, d), [side, side, top, side, faceMaterial(m.w, m.h, paint, s, false, it.stub), faceMaterial(m.w, m.h, paint, s, true)]));
+      g.add(new T.Mesh(new T.BoxGeometry(w, h, d), [side, side, top, side, face(m, s, it, redraw, false, paint, it.stub), face(m, s, it, redraw, true, paint)]));
       var rope = plain(s.logo === 'silver' ? '#a4a8b0' : s.dark ? '#A67C3C' : '#401216', 0.7);
       [d / 2 - 0.02, -d / 2 + 0.02].forEach(function (z) {
         var cv = new T.CatmullRomCurve3([new T.Vector3(-w * 0.2, h / 2 - 0.02, z), new T.Vector3(-w * 0.17, h / 2 + 0.55, z), new T.Vector3(0, h / 2 + 0.78, z), new T.Vector3(w * 0.17, h / 2 + 0.55, z), new T.Vector3(w * 0.2, h / 2 - 0.02, z)]);
@@ -251,10 +287,10 @@
       });
       g.userData.cy = 0.3; return g;
     },
-    mug: function (m, s, it) {
+    mug: function (m, s, it, redraw) {
       var r = m.r * U, h = m.h * U, g = new T.Group(), inner = plain('#FBF6EC', 0.3);
-      var s2 = { base: s.base, dark: s.dark, logo: s.logo, coat: 'gloss', sub: s.sub, print: s.print };
-      var wm = faceMaterial(m.r * 2 * Math.PI, m.h, 'wrap', s2, false, false);
+      var s2 = { base: s.base, dark: s.dark, logo: s.logo, coat: 'gloss', sub: s.sub, print: s.print, art: s.art };
+      var wm = s.art.front ? artMat(s.art.front, s2, redraw) : faceMaterial(m.r * 2 * Math.PI, m.h, 'wrap', s2, false, false);
       var out = new T.Mesh(new T.CylinderGeometry(r, r, h, 72, 1, true), wm); out.rotation.y = Math.PI; g.add(out);
       var glaze = plain(s.base, 0.36);
       var inn = new T.Mesh(new T.CylinderGeometry(r * 0.93, r * 0.93, h * 0.97, 72, 1, true), inner); inn.material.side = T.BackSide; inn.position.y = h * 0.015; g.add(inn);
@@ -266,9 +302,14 @@
     }
   };
 
-  /* Собирает модель носителя. opts: { base, logo, coat } */
+  /* Собирает модель носителя. opts: { base, logo, coat, front, back }.
+     Если в opts есть ключи front/back — это конкретный вариант, берём макет из него (или условное оформление, если макета нет).
+     Иначе — макет первого варианта, а без него общий для носителя. */
   function build(item, opts, redraw) {
-    var s = st(opts || {}), g = BUILD[item.model.type](item.model, s, item, redraw);
+    opts = opts || {};
+    var v0 = (item.variants || [])[0] || {}, src = 'front' in opts || 'back' in opts ? opts : v0.front || v0.back ? v0 : item;
+    var s = st(opts); s.art = { front: src.front || null, back: src.back || null };
+    var g = BUILD[item.model.type](item.model, s, item, redraw);
     var box = new T.Box3().setFromObject(g), sph = box.getBoundingSphere(new T.Sphere());
     var holder = new T.Group(); g.position.sub(sph.center); holder.add(g);
     holder.userData = { radius: sph.radius, minY: box.min.y - sph.center.y, w: box.max.x - box.min.x, d: box.max.z - box.min.z };
@@ -367,9 +408,11 @@
     if (before) host.insertBefore(wrap, before); else host.appendChild(wrap);
   }
 
+  if (window.PDA_DATA && window.PDA_DATA.items && !window.PDA_ADMIN) { try { applyData(window.PDA_DATA); } catch (e) { if (window.console) console.error(e); } }
+
   window.PDA = {
     STATUS: STATUS, href: href, filesState: filesState, store: store, mountNav: mountNav,
-    PALETTE: PALETTE, LOGO: LOGO, COAT: COAT, GROUPS: GROUPS, ITEMS: ITEMS,
+    PALETTE: PALETTE, LOGO: LOGO, COAT: COAT, GROUPS: GROUPS, ITEMS: ITEMS, DEFAULTS: DEFAULTS, STUB_DESC: STUB_DESC,
     item: function (id) { for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].id === id) return ITEMS[i]; return null; },
     group: function (id) { for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].id === id) return GROUPS[i]; return null; },
     hexOf: hexOf, build: build, dispose: dispose, makeRenderer: makeRenderer, makeScene: makeScene, frameIt: frameIt, syncSelected: syncSelected,

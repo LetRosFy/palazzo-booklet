@@ -28,7 +28,8 @@
   <footer><span id="url"></span><span id="date"></span></footer>
 </article>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/media.js?v=2"></script>
+<script src="/api/catalog"></script>
+<script src="/media.js?v=3"></script>
 <script>
 (function () {
   'use strict';
@@ -48,7 +49,7 @@
   var cols = [base]; if (opt.logo === 'print') cols.push(pick(P.PALETTE, P.hexOf(opt.base) === '#FEEEDA' || opt.base === 'sand' || opt.base === 'greyblue' ? 'bordeaux' : 'ivory'));
   if (opt.logo === 'gold') cols.push({ name: 'Muted Gold · фольга', hex: '#A67C3C' });
   cols.forEach(function (c) { var li = el('li'), i = el('i'); i.style.background = c.hex; li.appendChild(i); li.appendChild(el('span', c.name)); li.appendChild(el('code', c.hex)); $('pal').appendChild(li); });
-  it.files.forEach(function (f) { var li = el('li'), a = el('span', f.name + ' — ' + f.kind); li.appendChild(a); li.appendChild(el('code', f.url ? location.origin + f.url + (f.date ? ' · ' + f.date : '') : 'ожидает загрузки')); $('files').appendChild(li); });
+  it.files.forEach(function (f) { var li = el('li'), a = el('span', f.name + ' — ' + f.kind); li.appendChild(a); li.appendChild(el('code', f.url ? (/^https?:/.test(f.url) ? f.url : location.origin + f.url) + (f.date ? ' · ' + f.date : '') : 'ожидает загрузки')); $('files').appendChild(li); });
   $('url').textContent = location.origin + itemUrl; $('date').textContent = 'Сформировано ' + new Date().toLocaleDateString('ru-RU');
   $('print').addEventListener('click', function () { window.print(); });
   $('copy').addEventListener('click', function () { var b = $('copy'); (navigator.clipboard ? navigator.clipboard.writeText(location.href) : Promise.reject()).then(function () { b.textContent = 'Скопировано'; setTimeout(function () { b.textContent = 'Скопировать ссылку'; }, 1800); }, function () { window.prompt('Ссылка на техкарточку', location.href); }); });
@@ -60,5 +61,9 @@
     [['imgF', 0], ['imgB', Math.PI]].forEach(function (p) { P.frameIt(s, h, 4 / 3, 0.95, p[1], 0); r.render(s.scene, s.cam); $(p[0]).src = cv.toDataURL('image/png'); });
     P.dispose(h); r.dispose();
   } catch (e) {}
+  // загруженный макет показываем как есть: лицо и оборот
+  var art = v.front || v.back ? v : it;
+  if (art.front) { $('imgF').src = art.front; $('imgF').style.objectFit = 'contain'; }
+  if (art.back) { $('imgB').src = art.back; $('imgB').style.objectFit = 'contain'; }
 })();
 </script>
