@@ -6,8 +6,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/heroui.min.css?v=7">
-<link rel="stylesheet" href="/ui.css?v=7">
+<link rel="stylesheet" href="/heroui.min.css?v=9">
+<link rel="stylesheet" href="/ui.css?v=9">
 <body class="p-book">
 <div id="rotate" role="alert">
   <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="20" y="8" width="24" height="40" rx="4"/><path d="M30 42h4"/><path d="M12 54c6 6 18 7 28 2M42 59l-3-4 5-1"/></svg>
@@ -26,7 +26,8 @@
       <button type="button" class="toggle-button toggle-button--sm" id="flip" data-move="m:#moreList l:#moreList" aria-pressed="false" data-tip="Перевернуть буклет и показать заднюю обложку" data-tip-side="bottom">Сзади</button>
       <button type="button" class="toggle-button toggle-button--sm" id="camMode" data-move="m:#moreList l:#moreList" aria-pressed="false" data-tip="Режим камеры: тянуть — вращать сцену, а не листать" data-tip-side="bottom">Камера</button>
       <button type="button" class="toggle-button toggle-button--sm" id="studioB" data-move="m:#moreList l:#moreList" aria-pressed="false" data-tip="Посмотреть буклет на тёмном фоне" data-tip-side="bottom">Тёмный фон</button>
-      <button type="button" class="toggle-button toggle-button--sm" id="togglePanel" data-move="m:#moreList l:#moreList" aria-expanded="true" aria-controls="panel" data-tip="Список страниц и настройки вида" data-tip-side="bottom">Страницы</button>
+      <button type="button" class="toggle-button toggle-button--sm" id="togglePanel" data-move="m:#moreList l:#moreList" aria-expanded="false" aria-controls="panel" data-tip="Материал обложки и камера" data-tip-side="bottom"><span class="lbl-m">Страницы</span><span class="lbl-d">Настройки</span></button>
+      <button type="button" class="button button--sm button--tertiary" id="fsBtn" data-tip="Показ без интерфейса, на весь экран. Esc — выйти" data-tip-side="bottom"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg><span class="lbl">Во весь экран</span></button>
       <button type="button" class="button button--sm button--tertiary" id="helpBtn" aria-expanded="false" aria-controls="helpPop" data-move="m:#moreList l:#moreList"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.6 1.6c-.6.3-.9.7-.9 1.3"/><path d="M8 11.4v.1"/></svg><span class="lbl">Подсказки</span></button>
       <button type="button" class="button button--icon-only button--tertiary" id="moreBtn" aria-label="Ещё" aria-expanded="false" aria-controls="more"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg></button>
     </div>
@@ -38,8 +39,8 @@
     <div id="err"><div><b>Не удалось запустить 3D.</b><br><span class="hintline">Браузеру нужен WebGL. Откройте страницу в Chrome, Safari или Firefox с включённым аппаратным ускорением.</span></div></div>
 
     <aside id="panel" class="card glass grab">
-      <div class="ph"><span>Страницы и настройки</span><button class="button button--icon-only button--sm button--ghost" id="closePanel" type="button" aria-label="Скрыть панель" data-tip="Скрыть панель"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg></button></div>
-      <section>
+      <div class="ph"><span><span class="lbl-m">Страницы и настройки</span><span class="lbl-d">Настройки вида</span></span><button class="button button--icon-only button--sm button--ghost" id="closePanel" type="button" aria-label="Скрыть панель" data-tip="Скрыть панель"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg></button></div>
+      <section class="sec-pages">
         <h2 class="eyebrow">Страницы</h2>
         <p class="hintline" style="margin:0 0 8px">Нажмите на страницу, чтобы перейти к ней.</p>
         <ol id="list"></ol>
@@ -80,6 +81,7 @@
       <span class="state" id="state" aria-live="polite">Обложка</span>
     </div>
   </main>
+  <nav class="card card--default strip" id="strip" aria-label="Развороты"></nav>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -167,7 +169,9 @@ var texPlain=mkTex(cvPlain,true),texBump=mkTex(cvBump,false),texFront=mkTex(cvFr
 function fillArt(cv,tex){var x=cv.getContext('2d');x.fillStyle=fabricState.color;x.fillRect(0,0,cv.width,cv.height);tex.needsUpdate=true}
 fillArt(cvFront,texFront);fillArt(cvBackA,texBackA);fillArt(cvSpine,texSpine);
 function loadArt(src,cv,tex){var im=new Image();im.onload=function(){cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);tex.needsUpdate=true};im.src=src}
-loadArt('cover-front.jpg',cvFront,texFront);loadArt('cover-back.jpg',cvBackA,texBackA);loadArt('spine.jpg',cvSpine,texSpine);
+var CVID=(function(){try{var q=new URLSearchParams(location.search).get('cover');if(q&&/^n\d\d$/.test(q)){localStorage.setItem('palazzo-cover',q);return q}q=localStorage.getItem('palazzo-cover');if(q&&/^n\d\d$/.test(q))return q}catch(e){}return null})();
+window.__bkCover=CVID?'bc/'+CVID+'-f.jpg':'cover-front.jpg';
+loadArt(window.__bkCover,cvFront,texFront);loadArt(CVID?'bc/'+CVID+'-b.jpg':'cover-back.jpg',cvBackA,texBackA);loadArt(CVID?'bc/'+CVID+'-s.jpg':'spine.jpg',cvSpine,texSpine);
 function fabricMat(map,side,cut){
   return new THREE.MeshStandardMaterial({map:map,bumpMap:texBump,bumpScale:1.1,roughness:.96,metalness:0,side:side,alphaTest:cut?0.5:0});
 }
@@ -608,7 +612,7 @@ function syncFlipBtn(){var b=$('flip');b.setAttribute('aria-pressed',flipWanted?
 $('flip').addEventListener('click',function(){side=1;flipWanted=!flipWanted;if(flipWanted)goTo(0,true);syncFlipBtn()});
 $('rotateOk').addEventListener('click',function(){$('rotate').classList.add('off')});
 $('closePanel').addEventListener('click',function(){setPanel(false)});
-if(COARSE||window.innerWidth<=760) setPanel(false);
+setPanel(false);
 function setView(i,btn){
   camTh=viewDefs[i].th;camPhi=Math.round(phiCur/(2*Math.PI))*2*Math.PI;panX=panY=0;zoom=1;syncCamUI();
   document.querySelectorAll('[data-view]').forEach(function(x){x.setAttribute('aria-pressed',x===btn?'true':'false')});
@@ -638,7 +642,7 @@ function renderList(){
     li.appendChild(thumbEl(pg,i));
     var t=document.createElement('div');t.className='t';
     t.innerHTML='<b>Стр. '+(i+1+pageOff)+'</b><span></span>';t.lastChild.textContent=pg.name;li.appendChild(t);
-    var go=function(){side=(i%2===0)?1:0;goTo(Math.floor(i/2)+1);if(isSheet())setPanel(false)};
+    var go=function(){side=(i%2===0)?1:0;goTo(Math.floor((i+1)/2)+1);if(isSheet())setPanel(false)};
     li.addEventListener('click',go);
     li.addEventListener('keydown',function(e){if(e.key==='Enter')go()});
     ol.appendChild(li);
@@ -756,6 +760,7 @@ if(document.fonts&&document.fonts.load){
     
   }).catch(function(){});
 }
+window.__bk={go:function(s){side=1;goTo(s)},n:function(){return N},cur:function(){return cur}};
 window.__booklet={cam:function(z,t,py,ph){zoom=z;camTh=t;th=t;panY=py||0;if(ph!=null){camPhi=ph;phiCur=ph}},flipNow:function(v){flipWanted=v;flipCur=v?Math.PI:0;syncFlipBtn()},goTo:goTo,setCur:function(v){anim=null;cur=v;target=v}};
 requestAnimationFrame(frame);
 })();
@@ -766,8 +771,9 @@ requestAnimationFrame(frame);
   <ul class="help m"><li><span class="k"><kbd class="kbd">Свайп</kbd></span><span>Проведите влево или вправо, чтобы перелистнуть. Можно и коснуться края страницы.</span></li><li><span class="k"><kbd class="kbd">Вертикально</kbd></span><span>Буклет идёт по одной странице. Поверните телефон, чтобы видеть разворот целиком.</span></li><li><span class="k"><kbd class="kbd">Щипок</kbd></span><span>Разведите два пальца, чтобы приблизить; одним пальцем двигайте страницу.</span></li><li><span class="k"><kbd class="kbd">⋯</kbd></span><span>В меню: список страниц, камера, тёмный фон, задняя обложка.</span></li><li><span class="k"><kbd class="kbd">Обложки</kbd></span><span>В меню или вверху можно перейти к вариантам обложки.</span></li></ul>
   <button type="button" class="button button--primary button--sm button--full-width" id="helpOk">Понятно</button>
 </div></div>
+<button type="button" class="button button--sm fab" id="fsExit" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>Выйти из показа</button>
 <div class="scrim" id="scrim" hidden></div>
 <div class="sheet" id="more" role="dialog" aria-label="Ещё" hidden><div id="moreNav"></div><div id="moreList"></div></div>
 <div class="hintpill" id="toast" role="status" hidden>Листайте свайпом · щипок приближает</div>
-<script src="/ui.js?v=7"></script>
+<script src="/ui.js?v=9"></script>
 </html>
