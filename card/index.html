@@ -28,7 +28,8 @@
   <footer><span id="url"></span><span id="date"></span></footer>
 </article>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/media.js?v=3"></script>
+<script src="/vendor/GLTFLoader.js"></script>
+<script src="/media.js?v=4"></script>
 <script>
 (function () {
   'use strict';
@@ -54,11 +55,11 @@
   $('copy').addEventListener('click', function () { var b = $('copy'); (navigator.clipboard ? navigator.clipboard.writeText(location.href) : Promise.reject()).then(function () { b.textContent = 'Скопировано'; setTimeout(function () { b.textContent = 'Скопировать ссылку'; }, 1800); }, function () { window.prompt('Ссылка на техкарточку', location.href); }); });
   // виды: лицо и оборот, строго фронтально
   if (!P.webgl() || !window.THREE) return;
-  try {
+  P.preload([it.id]).then(function () { try {
     var cv = document.createElement('canvas'), r = P.makeRenderer(cv, 960, 720), s = P.makeScene(r), h = P.build(it, opt);
     s.scene.add(h);
     [['imgF', 0], ['imgB', Math.PI]].forEach(function (p) { P.frameIt(s, h, 4 / 3, 0.95, p[1], -0.04); r.render(s.scene, s.cam); $(p[0]).src = cv.toDataURL('image/png'); });
     P.dispose(h); r.dispose();
-  } catch (e) {}
+  } catch (e) {} });
 })();
 </script>

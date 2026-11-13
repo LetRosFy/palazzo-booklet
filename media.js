@@ -200,17 +200,18 @@
     if (o.label && !back) { c.globalAlpha = 0.3; c.fillStyle = s.sub; spaced(c, 'МАКЕТ-ЗАГЛУШКА', W / 2, H - Math.max(14, H * 0.035), Math.max(10, Math.min(W, H) * 0.022), 0.22, SANS, 500); c.globalAlpha = 1; }
     var rough = o.rough != null ? o.rough : s.coat === 'gloss' ? 0.34 : 0.88, foil = s.logo === 'gold' || s.logo === 'silver';
     var m = o.clearcoat ? new T.MeshPhysicalMaterial({ clearcoat: 1, clearcoatRoughness: 0.06 }) : new T.MeshStandardMaterial();
-    m.map = tex(cv, true); m.roughness = rough; m.metalness = 0;
+    var flip = o.flipY !== false, tx = function (cvs, srgb) { var t = tex(cvs, srgb); t.flipY = flip; return t; };
+    m.map = tx(cv, true); m.roughness = rough; m.metalness = 0;
     // рельеф: зерно бумаги, логотип вдавлен (фольга и блинт — тиснение)
     var bv = canvas(W, H), bc = bv.getContext('2d');
     bc.fillStyle = o.clearcoat || s.coat === 'gloss' ? '#808080' : bc.createPattern(grain(), 'repeat'); bc.fillRect(0, 0, W, H);
     if (s.logo !== 'print') { var bs = s.logo === 'blind' ? '#1e1e1e' : '#5a5a5a'; paint(bc, W, H, { ink: function () { bc.fillStyle = bs; bc.strokeStyle = bs; bc.globalAlpha = 1; }, sub: function () { bc.fillStyle = bc.strokeStyle = 'rgba(0,0,0,0)'; } }, back); }
-    m.bumpMap = tex(bv, false); m.bumpScale = 0.0035;
+    m.bumpMap = tx(bv, false); m.bumpScale = 0.0035;
     if (foil) {
       var mv = canvas(W, H), mc = mv.getContext('2d');
       mc.fillStyle = 'rgb(0,' + Math.round(rough * 255) + ',0)'; mc.fillRect(0, 0, W, H);
       paint(mc, W, H, { ink: function () { mc.fillStyle = 'rgb(0,62,255)'; mc.strokeStyle = 'rgb(0,62,255)'; mc.globalAlpha = 1; }, sub: function () { mc.fillStyle = mc.strokeStyle = 'rgba(0,0,0,0)'; } }, back);
-      var mt = tex(mv, false); m.metalnessMap = mt; m.roughnessMap = mt; m.metalness = 1; m.roughness = 1;
+      var mt = tx(mv, false); m.metalnessMap = mt; m.roughnessMap = mt; m.metalness = 1; m.roughness = 1;
     }
     return m;
   }
@@ -416,9 +417,73 @@
   };
   BUILD.slab = function (m, s, it) { return slab(m.w, m.h, m.t, m.r, faceMaterial(m.w, m.h, m.face, s, { label: it.stub }), faceMaterial(m.w, m.h, m.face, s, { back: true }), paper(edgeColor(s), 0.95, 0)); };
 
+  /* ───── модели из Blender (GLB) ─────
+     Геометрия лежит в /models/<id>.glb, материалы названы по ролям и подменяются здесь:
+     face_* — грани под макет (UV 0..1 на весь формат), остальные — бумага, картон, металл, глазурь. */
+  var bagFace = function (c2, W, H, k) { k.ink(); wordmark(c2, W / 2, H * 0.54, W * 0.5); };
+  var GLB_FACES = {
+    card: { face_front: ['card', 90, 50], face_back: ['card', 90, 50, { back: true }] },
+    keycard: { face_front: ['card', 85.6, 54, { rough: 0.28, clearcoat: true }], face_back: ['keyback', 85.6, 54, { back: true, rough: 0.28, clearcoat: true, label: false }], face_sleeve: ['center', 94, 64, { label: false }] },
+    postcard: { face_front: ['postcard', 148, 105], face_back: ['postcard', 148, 105, { back: true }] },
+    envelope: { face_front: ['envelope', 220, 110], face_back: ['envback', 220, 110, { back: true }] },
+    letterhead: { face_front: ['letter', 210, 297] },
+    folder: { face_front: ['center', 220, 310], face_back: ['mark', 220, 310, { back: true }] },
+    notebook: { face_front: ['center', 148, 210], face_back: ['mark', 148, 210, { back: true }] },
+    calendar: { face_cal: ['calendar', 204, 135], face_back: ['center', 210, 148, { label: false }] },
+    bag: { face_front: [bagFace, 240, 320], face_back: [bagFace, 240, 320, { back: true }] },
+    mug: { face_wrap: ['wrap', 257.6, 86.7, { rough: 0.3, clearcoat: true, label: false, coat: 'gloss' }] }
+  };
+  var GLB = {};
+  function preload(ids) {
+    if (!T.GLTFLoader) return Promise.resolve();
+    return Promise.all((ids || ITEMS.map(function (x) { return x.id; })).map(function (id) {
+      var it = id && GLB_FACES[id] ? id : null; if (!it) return null;
+      if (!GLB[id]) GLB[id] = new Promise(function (ok) {
+        new T.GLTFLoader().load('/models/' + id + '.glb?v=1', function (g) {
+          g.scene.traverse(function (o) { if (o.isMesh) { o.userData.mat = o.material.name; o.geometry.userData.shared = true; o.material.dispose(); } });
+          GLB[id].scene = g.scene; ok();
+        }, undefined, function () { ok(); });
+      });
+      return GLB[id];
+    }));
+  }
+  function roleMaterial(name, s) {
+    var gloss = s.coat === 'gloss' ? 0.34 : 0.88;
+    switch (name) {
+      case 'base': return paper(s.base, gloss);
+      case 'board': return paper(mix(s.base, '#000000', 0.06), 0.9, 0);
+      case 'inner': return paper(mix(s.base, '#ffffff', s.dark ? 0.1 : 0.3), 0.92);
+      case 'edge': return paper(edgeColor(s), 0.95, 0);
+      case 'white': return paper('#FBF8F1', 0.92);
+      case 'page': return plain('#F3EDE0');
+      case 'page_edge': return edgeMat('#F3EDE0', 70, 'h');
+      case 'accent': return paper(accent(s), 0.8);
+      case 'ribbon': return plain(s.logo === 'silver' ? '#a4a8b0' : '#A67C3C', 0.5);
+      case 'rope': return new T.MeshStandardMaterial({ color: lin(s.logo === 'silver' ? '#a4a8b0' : accent(s)), roughness: 0.46 });   // ручки пакета — атласная лента
+      case 'metal': return metal(s);
+      case 'glaze': return glaze(s.base);
+      case 'glaze_inner': return glaze('#FAF6EC');
+    }
+    return paper(s.base);
+  }
+  function fromGLB(item, s) {
+    var src = GLB[item.id] && GLB[item.id].scene, faces = GLB_FACES[item.id]; if (!src) return null;
+    var root = src.clone(true), cache = {};
+    root.traverse(function (o) {
+      if (!o.isMesh) return; var n = o.userData.mat;
+      if (!cache[n]) {
+        var f = faces[n];
+        if (f) { var fo = { flipY: false, label: item.stub && n !== 'face_back' }, k, s2 = s; for (k in f[3] || {}) fo[k] = f[3][k]; if (fo.coat) { s2 = {}; for (k in s) s2[k] = s[k]; s2.coat = fo.coat; } cache[n] = faceMaterial(f[1], f[2], f[0], s2, fo); }
+        else cache[n] = roleMaterial(n, s);
+      }
+      o.material = cache[n];
+    });
+    var g = new T.Group(); root.scale.setScalar(10); g.add(root); g.updateMatrixWorld(true); return g;   // метры Blender → единицы сцены (1 мм = 0.01)
+  }
+
   /* Собирает модель носителя. opts: { base, logo, coat } */
   function build(item, opts, redraw) {
-    var s = st(opts || {}), g = BUILD[item.model.type](item.model, s, item, redraw);
+    var s = st(opts || {}), g = fromGLB(item, s) || BUILD[item.model.type](item.model, s, item, redraw);
     g.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     var box = new T.Box3().setFromObject(g), sph = box.getBoundingSphere(new T.Sphere());
     var holder = new T.Group(); g.position.sub(sph.center); holder.add(g);
@@ -427,7 +492,7 @@
   }
   function dispose(obj) {
     obj.traverse(function (o) {
-      if (o.geometry) o.geometry.dispose();
+      if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose();
       [].concat(o.material || []).forEach(function (m) { ['map', 'metalnessMap', 'bumpMap'].forEach(function (k) { if (m[k] && !(m[k].userData && m[k].userData.shared)) m[k].dispose(); }); m.dispose(); });
     });
   }
@@ -538,7 +603,7 @@
     PALETTE: PALETTE, LOGO: LOGO, COAT: COAT, GROUPS: GROUPS, ITEMS: ITEMS,
     item: function (id) { for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].id === id) return ITEMS[i]; return null; },
     group: function (id) { for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].id === id) return GROUPS[i]; return null; },
-    hexOf: hexOf, lightFor: lightFor, build: build, dispose: dispose, makeRenderer: makeRenderer, makeScene: makeScene, frameIt: frameIt, syncSelected: syncSelected,
+    hexOf: hexOf, lightFor: lightFor, preload: preload, build: build, dispose: dispose, makeRenderer: makeRenderer, makeScene: makeScene, frameIt: frameIt, syncSelected: syncSelected,
     webgl: function () { try { var c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl'))); } catch (e) { return false; } }
   };
 })();

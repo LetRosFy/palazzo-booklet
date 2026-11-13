@@ -46,7 +46,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/media.js?v=3"></script>
+<script src="/vendor/GLTFLoader.js"></script>
+<script src="/media.js?v=4"></script>
 <script>
 (function () {
   'use strict';
@@ -160,6 +161,6 @@
       if (t.dirty || Math.abs(t.yaw - before) > 0.0004) { draw(t); t.dirty = false; }
     });
   }
-  requestAnimationFrame(tick);
+  P.preload().then(function () { requestAnimationFrame(tick); });
 })();
 </script>
