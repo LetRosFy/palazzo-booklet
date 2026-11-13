@@ -6,8 +6,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/heroui.min.css?v=11">
-<link rel="stylesheet" href="/ui.css?v=11">
+<link rel="stylesheet" href="/heroui.min.css?v=12">
+<link rel="stylesheet" href="/ui.css?v=12">
 <body class="p-cover">
 <div class="shell">
   <header class="top">
@@ -59,7 +59,8 @@
         </div>
         <div class="cmp-grid" id="cmpGrid"></div>
         <p class="hintline" id="cmpHint"></p>
-        <p class="cmp-empty" id="cmpEmpty">Выберите ниже до трёх обложек — они встанут рядом в одном ракурсе.</p>
+        <p class="cmp-empty" id="cmpEmpty">Выберите ниже до трёх обложек — они встанут рядом и будут вращаться вместе.</p>
+        <div class="live-caps" id="liveCaps"></div>
         <div class="cmp-pick" id="cmpPick" role="group" aria-label="Обложки для сравнения"></div>
       </div>
     </div>
@@ -78,6 +79,8 @@
       <span class="separator separator--vertical" aria-hidden="true"></span>
       <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="ribbon" data-move="m:#moreList" aria-pressed="true" data-tip="Показать или скрыть ленту-закладку">Ляссе</button>
       <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="studio" data-move="m:#moreList" aria-pressed="false" data-tip="Посмотреть обложку на тёмном фоне">Тёмный фон</button>
+      <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="tableBtn" data-move="m:#moreList" aria-pressed="false" data-tip="Положить книгу на каменный стол">На столе</button>
+      <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="openBtn" data-move="m:#moreList" aria-pressed="false" data-tip="Открыть обложку: форзац и первая страница">Открыть</button>
       <span class="separator separator--vertical" aria-hidden="true"></span>
       <button type="button" class="button button--icon-only button--sm button--ghost" id="zout" aria-label="Отдалить" data-tip="Отдалить"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8h10"/></svg></button>
       <button type="button" class="button button--icon-only button--sm button--ghost" id="zin" aria-label="Приблизить" data-tip="Приблизить"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
@@ -738,13 +741,168 @@
     }
   };
 
+  // ===== живое сравнение: одна и та же книга рисуется до трёх раз с разными обложками, поворот общий =====
+  var LOOKS = {}, LIVE = [], liveBusy = false;
+  function lookTex(img, srgb, mip) {
+    if (!img) return null;
+    var t = new THREE.Texture(img);
+    if (srgb) t.encoding = THREE.sRGBEncoding;
+    t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = ANISO;
+    if (!mip) { t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; }
+    t.needsUpdate = true; return t;
+  }
+  function loadLook(id, cb) {
+    if (LOOKS[id]) { cb(LOOKS[id]); return; }
+    var v = byId(id), d = WRAP_IMG[id], got = {}, left = 3;
+    function step() {
+      if (--left > 0) return;
+      if (!got.art) { cb(null); return; }
+      LOOKS[id] = { v: v, art: lookTex(got.art, true, true), bump: lookTex(got.bump, false, true), foil: got.foil ? lookTex(tintFoil(got.foil), true, false) : null };
+      cb(LOOKS[id]);
+    }
+    loadImg(d.art, function (im) { got.art = im; step(); });
+    loadImg(d.foil, function (im) { got.foil = im; step(); });
+    loadImg(d.bump, function (im) { got.bump = im; step(); });
+  }
+  function dropLooks() {
+    Object.keys(LOOKS).forEach(function (k) { var L = LOOKS[k]; [L.art, L.bump, L.foil].forEach(function (t) { if (t) t.dispose(); }); });
+    LOOKS = {};
+  }
+  function swapMaps(m, map, bump, env) {                    // шейдер пересобирается только если меняется набор карт
+    var ch = (!m.map) !== (!map) || (!m.bumpMap) !== (!bump) || (!m.envMap) !== (!env);
+    m.map = map; m.bumpMap = bump; m.envMap = env; if (ch) m.needsUpdate = true;
+  }
+  function useLook(L) {
+    var v = L.v, G = v.id === 'n10', gloss = !G && FIN.lam === 'gloss', env = (G || gloss) ? foilMat.envMap : null;
+    [capF, capB, wSpineFace].forEach(function (m) {
+      swapMaps(m, L.art, L.bump, env);
+      m.bumpScale = G ? 2.4 : 3.2; m.color.set(G ? 0xffffff : WCOL);
+      m.roughness = G ? 0.34 : (gloss ? 0.28 : 0.86); m.metalness = G ? 0.9 : 0; m.envMapIntensity = G ? 1.25 : 0.34;
+    });
+    if (spineMat.map || spineMat.bumpMap) plain(spineMat, v.spineC); else spineMat.color.copy(lin(v.spineC));
+    if (L.foil) { swapMaps(wFoilMat, L.foil, L.bump, wFoilMat.envMap); wFoilMat.bumpScale = 2.6; }
+    gWrap.visible = !!L.foil; gBase.visible = false; foil.visible = false;
+    var ec = FIN.edge === 'white' ? [244, 240, 230] : FIN.edge === 'silver' ? [198, 202, 208] : v.edgeC, em = FIN.edge === 'white' ? false : FIN.edge === 'silver' ? true : v.edgeM;
+    [paper, edgeU, edgeV].forEach(function (m) {
+      m.color.setRGB(ec[0] / 255, ec[1] / 255, ec[2] / 255).convertSRGBToLinear();
+      m.metalness = em ? 0.85 : 0; m.roughness = em ? 0.38 : 0.8; m.envMapIntensity = 1.1;
+      var e2 = em ? foilMat.envMap : null; if ((!m.envMap) !== (!e2)) m.needsUpdate = true; m.envMap = e2;
+    });
+    var RC = FIN.ribbon || v.ribbonC;
+    ribbon.material.color.setRGB(RC[0] / 255, RC[1] / 255, RC[2] / 255).convertSRGBToLinear(); hbMat.color.copy(ribbon.material.color);
+  }
+  function liveToggle(id, done) {
+    var k = LIVE.indexOf(id);
+    if (k >= 0) { LIVE.splice(k, 1); if (done) done(); return; }
+    if (LIVE.length >= 3 || liveBusy) { if (done) done(); return; }
+    liveBusy = true; stage.classList.add('loading');
+    loadLook(id, function (L) { liveBusy = false; stage.classList.remove('loading'); if (L) LIVE.push(id); if (done) done(); });
+  }
+  function liveStop() { var was = LIVE.length; LIVE = []; if (was && activeId) showVariant(activeId); }
+  var _vec2 = new THREE.Vector2();
+  function renderLive() {
+    renderer.getSize(_vec2); var w = _vec2.x, h = _vec2.y, n = LIVE.length, vw = w / n;
+    renderer.setScissorTest(true);
+    for (var i = 0; i < n; i++) {
+      renderer.setViewport(i * vw, 0, vw, h); renderer.setScissor(i * vw, 0, vw, h);
+      camera.aspect = vw / h; camera.updateProjectionMatrix();
+      var fit = Math.min(1, camera.aspect * 0.82), d = (665 / fit) * cur.zoom;
+      camera.position.set(0, d * Math.sin(ELEV), d * Math.cos(ELEV)); camera.lookAt(0, -6, 0);
+      useLook(LOOKS[LIVE[i]]); wFoilF.visible = gWrap.visible;
+      renderer.render(scene, camera);
+    }
+    renderer.setScissorTest(false); renderer.setViewport(0, 0, w, h);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+
+  // ===== книга на столе и раскрытие обложки =====
+  var onTable = false, tableMix = 0, isOpen = false, openMix = 0, TABLE_Y = -H / 2 - 22;
+  function stoneTexture() {                                // светлый травертин: тёплая основа, горизонтальные прожилки, мелкие поры
+    var S = 1024, c = document.createElement('canvas'); c.width = c.height = S;
+    var x = c.getContext('2d'), r = mulberry(31), i;
+    x.fillStyle = '#E4DACA'; x.fillRect(0, 0, S, S);
+    for (i = 0; i < 90; i++) {                             // мягкие облака тона
+      var rad = 90 + r() * 240, gx = r() * S, gy = r() * S, g = x.createRadialGradient(gx, gy, 0, gx, gy, rad);
+      var col = r() > 0.5 ? '255,251,242' : '168,148,120', al = 0.05 + r() * 0.07;
+      g.addColorStop(0, 'rgba(' + col + ',' + al + ')'); g.addColorStop(1, 'rgba(' + col + ',0)');
+      x.fillStyle = g; x.fillRect(gx - rad, gy - rad, rad * 2, rad * 2);
+    }
+    x.lineCap = 'round';
+    for (i = 0; i < 26; i++) {                             // тонкие прожилки
+      var px = r() * S, py = r() * S, ang = r() * 6.28; x.beginPath(); x.moveTo(px, py);
+      for (var s2 = 0; s2 < 14; s2++) { ang += (r() - 0.5) * 0.9; px += Math.cos(ang) * 34; py += Math.sin(ang) * 34; x.lineTo(px, py); }
+      x.strokeStyle = 'rgba(150,128,100,' + (0.06 + r() * 0.1) + ')'; x.lineWidth = 0.6 + r() * 1.6; x.stroke();
+    }
+    var t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 4); t.anisotropy = ANISO;
+    return t;
+  }
+  var tableMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.82, metalness: 0 });
+  var tableMesh = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), tableMat);
+  tableMesh.rotation.x = -Math.PI / 2; tableMesh.position.y = TABLE_Y - 0.6; tableMesh.visible = false; scene.add(tableMesh);
+  function setTable(on) {
+    onTable = !!on;
+    if (onTable && !tableMat.map) { tableMat.map = stoneTexture(); tableMat.needsUpdate = true; }
+    if (onTable) { tgt.yaw = -0.22; tgt.pitch = 0; tgt.zoom = 1.08; setActive(null); }
+    else { tgt.yaw = PRESETS.angle.yaw; tgt.pitch = PRESETS.angle.pitch; tgt.zoom = isOpen ? 1.45 : 1; setActive(isOpen ? null : 'angle'); }
+    var b = document.getElementById('tableBtn'); if (b) b.setAttribute('aria-pressed', String(onTable));
+  }
+  // передняя крышка на петле у корешка, под ней форзац и первая страница блока
+  var HX = -W / 2 + 1.2, HZ = T / 2 - BT, hinge = new THREE.Group();
+  hinge.position.set(HX, 0, HZ);
+  [front, grooveF, wFoilF].forEach(function (o) { o.position.x -= HX; o.position.z -= HZ; hinge.add(o); });
+  var endMat = new THREE.MeshStandardMaterial({ color: 0xefe8d8, roughness: 0.95 });
+  var endpaper = new THREE.Mesh(new THREE.PlaneGeometry(W - 3, H - 3), endMat);
+  endpaper.rotation.y = Math.PI; endpaper.position.set(W / 2 - 1.2 - 0.3, 0, -0.07); endpaper.visible = false; hinge.add(endpaper);
+  var pageMat = new THREE.MeshStandardMaterial({ color: 0xfbf9f3, roughness: 0.92 });
+  var firstPage = new THREE.Mesh(new THREE.PlaneGeometry(bw, bh), pageMat);
+  firstPage.position.set(block.position.x, 0, BLOCK / 2 + 0.06); firstPage.visible = false;
+  book.add(hinge); book.add(firstPage);
+  function setOpen(on) {
+    isOpen = !!on;
+    if (isOpen && !pageMat.map) {
+      loadImg('/pages/p003.jpg', function (im) { if (!im) return; var t = new THREE.Texture(im); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; t.needsUpdate = true; pageMat.map = t; pageMat.color.set(0xffffff); pageMat.needsUpdate = true; });
+    }
+    if (isOpen) { auto = false; autoBtn.setAttribute('aria-pressed', 'false'); if (!onTable) { tgt.yaw = 0.12; tgt.pitch = -0.2; } tgt.zoom = onTable ? 1.5 : 1.45; setActive(null); }
+    else { tgt.zoom = onTable ? 1.08 : 1; if (!onTable) { tgt.yaw = PRESETS.angle.yaw; tgt.pitch = PRESETS.angle.pitch; setActive('angle'); } }
+    var b = document.getElementById('openBtn'); if (b) b.setAttribute('aria-pressed', String(isOpen));
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var name = b.getAttribute('data-view');
+      if (isOpen) { isOpen = false; var ob = document.getElementById('openBtn'); if (ob) ob.setAttribute('aria-pressed', 'false'); }
+      if (onTable && (name === 'spine' || name === 'back')) { onTable = false; var tb = document.getElementById('tableBtn'); if (tb) tb.setAttribute('aria-pressed', 'false'); }
+    });
+  });
+  (function () {
+    var tb = document.getElementById('tableBtn'), ob = document.getElementById('openBtn');
+    if (tb) tb.addEventListener('click', function () { setTable(!onTable); });
+    if (ob) ob.addEventListener('click', function () { setOpen(!isOpen); });
+  })();
+
+  window.__cover.live = {
+    ids: function () { return LIVE.slice(); },
+    toggle: function (id, done) { if (isOpen) setOpen(false); if (onTable) setTable(false); liveToggle(id, done); },
+    stop: liveStop, busy: function () { return liveBusy; }
+  };
+  (function () {
+    var fin0 = window.__cover.finish;
+    window.__cover.finish = function (k, val) {
+      fin0(k, val); var ids = LIVE.slice(); dropLooks();
+      if (ids.length) { LIVE = []; (function next(i) { if (i < ids.length) liveToggle(ids[i], function () { next(i + 1); }); })(0); }
+    };
+  })();
+
   function pose(t) {
-    var d = baseDist * cur.zoom;
-    camera.position.set(0, d * Math.sin(ELEV), d * Math.cos(ELEV));
-    camera.lookAt(0, -6, 0);
-    var bob = reduce ? 0 : Math.sin(t * 0.0012) * 3;
-    book.position.y = bob;
-    book.rotation.set(cur.pitch, cur.yaw, 0);
+    var tm = tableMix, om = openMix, d = baseDist * cur.zoom;
+    var elev = ELEV + (clamp(0.98 - cur.pitch * 0.5, 0.62, 1.3) - ELEV) * tm;
+    var cx = -W * 0.42 * om * (1 - 0.15 * tm), ly = -6 * (1 - tm) + (TABLE_Y + T / 2) * tm;
+    camera.position.set(cx, ly + 6 * (1 - tm) + d * Math.sin(elev), d * Math.cos(elev));
+    camera.lookAt(cx, ly, 0);
+    var bob = (reduce ? 0 : Math.sin(t * 0.0012) * 3) * (1 - tm) * (1 - om);
+    book.position.y = bob * (1 - tm) + (TABLE_Y + T / 2 + 0.7) * tm;
+    book.rotation.set(cur.pitch * (1 - tm) - Math.PI / 2 * tm, cur.yaw * (1 - tm), cur.yaw * tm);
+    hinge.rotation.y = -2.72 * om;
+    endpaper.visible = firstPage.visible = om > 0.004;
     return bob;
   }
   function frame(t) {
@@ -764,7 +922,19 @@
     shadow.scale.set((cy * W + sy * T + 60) * 1.5, (sy * W + cy * T + 60) * 1.6, 1);
     shadow.material.opacity = 0.9 - bob * 0.04;
 
-    renderer.render(scene, camera);
+    var tT = onTable ? 1 : 0, oT = isOpen ? 1 : 0;
+    tableMix += (tT - tableMix) * 0.09; if (Math.abs(tT - tableMix) < 0.002) tableMix = tT;
+    openMix += (oT - openMix) * 0.08; if (Math.abs(oT - openMix) < 0.002) openMix = oT;
+    tableMesh.visible = tableMix > 0.01;
+    if (tableMesh.visible) {
+      tableMat.transparent = tableMix < 1; tableMat.opacity = tableMix;
+      tableMat.color.setScalar(document.body.getAttribute('data-studio') === 'dark' ? 0.3 : 1);
+      shadow.scale.set(shadow.scale.x + ((W + 110) * (1 + 0.8 * openMix) - shadow.scale.x) * tableMix, shadow.scale.y + (H + 110 - shadow.scale.y) * tableMix, 1);
+      shadow.material.opacity = 0.9;
+    }
+    shadow.rotation.z = cur.yaw * tableMix;
+    wFoilF.visible = gWrap.visible;
+    if (LIVE.length) renderLive(); else renderer.render(scene, camera);
   }
   requestAnimationFrame(frame);
 })();
@@ -788,5 +958,5 @@
 </div>
 <div class="sheet" id="more" role="dialog" aria-label="Ещё" hidden><div id="moreNav"></div><div id="moreList"></div></div>
 <div class="hintpill" id="toast" role="status" hidden>Вращайте книгу пальцем · свайп по названию листает обложки</div>
-<script src="/ui.js?v=11"></script>
+<script src="/ui.js?v=12"></script>
 </html>

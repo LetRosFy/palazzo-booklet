@@ -6,8 +6,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/heroui.min.css?v=11">
-<link rel="stylesheet" href="/ui.css?v=11">
+<link rel="stylesheet" href="/heroui.min.css?v=12">
+<link rel="stylesheet" href="/ui.css?v=12">
 <body class="p-book">
 <div id="rotate" role="alert">
   <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="20" y="8" width="24" height="40" rx="4"/><path d="M30 42h4"/><path d="M12 54c6 6 18 7 28 2M42 59l-3-4 5-1"/></svg>
@@ -169,7 +169,7 @@ var texPlain=mkTex(cvPlain,true),texBump=mkTex(cvBump,false),texFront=mkTex(cvFr
 function fillArt(cv,tex){var x=cv.getContext('2d');x.fillStyle=fabricState.color;x.fillRect(0,0,cv.width,cv.height);tex.needsUpdate=true}
 fillArt(cvFront,texFront);fillArt(cvBackA,texBackA);fillArt(cvSpine,texSpine);
 function loadArt(src,cv,tex){var im=new Image();im.onload=function(){cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);tex.needsUpdate=true};im.src=src}
-var CVID=(function(){try{var q=new URLSearchParams(location.search).get('cover');if(q&&/^n\d\d$/.test(q)){localStorage.setItem('palazzo-cover',q);return q}q=localStorage.getItem('palazzo-cover');if(q&&/^n\d\d$/.test(q))return q}catch(e){}return null})();
+var CVID=(function(){try{var q=new URLSearchParams(location.search).get('cover');if(q&&/^n\d\d$/.test(q)){localStorage.setItem('palazzo-cover',q);return q}q=localStorage.getItem('palazzo-cover');if(q&&/^n\d\d$/.test(q))return q}catch(e){}return 'n12'})();
 window.__bkCover=CVID?'bc/'+CVID+'-f.jpg':'cover-front.jpg';
 loadArt(window.__bkCover,cvFront,texFront);loadArt(CVID?'bc/'+CVID+'-b.jpg':'cover-back.jpg',cvBackA,texBackA);loadArt(CVID?'bc/'+CVID+'-s.jpg':'spine.jpg',cvSpine,texSpine);
 function fabricMat(map,side,cut){
@@ -198,6 +198,19 @@ function glossMat(map,side,cut){
 var glossCF=glossMat(texFront,THREE.FrontSide,false),glossBA=glossMat(texBackA,THREE.BackSide,false),glossSP=glossMat(texSpine,THREE.FrontSide,false),
     glossPF=glossMat(texPlain,THREE.FrontSide,false),glossPB=glossMat(texPlain,THREE.BackSide,false);
 [glossCF,glossBA,glossSP,glossPF,glossPB].forEach(function(m){m.color.setHex(0xD5D9E4)}); /* keep the printed beige true to the artwork */
+/* фольга и тиснение на обложке: карты металла, шероховатости и рельефа из макета */
+function loadMap(src,cb){var im=new Image();im.onload=function(){var t=new THREE.Texture(im);t.anisotropy=maxAniso;t.needsUpdate=true;cb(t)};im.src=src}
+function foilMaps(sfx,gl,fb){
+  loadMap('bc/'+CVID+'-'+sfx+'o.png',function(t){
+    gl.metalnessMap=t;gl.roughnessMap=t;gl.metalness=1;gl.roughness=1;gl.needsUpdate=true;
+    fb.metalnessMap=t;fb.metalness=1;fb.envMap=envTex;fb.envMapIntensity=.7;fb.needsUpdate=true;
+  });
+}
+foilMaps('f',glossCF,matCoverF);foilMaps('b',glossBA,matBackA);foilMaps('s',glossSP,matSpine);
+if(CVID==='n12'||CVID==='n10'){
+  loadMap('bc/'+CVID+'-fh.png',function(t){glossCF.bumpMap=t;glossCF.bumpScale=1.6;glossCF.needsUpdate=true});
+  loadMap('bc/'+CVID+'-bh.png',function(t){glossBA.bumpMap=t;glossBA.bumpScale=1.6;glossBA.needsUpdate=true});
+}
 function coverMats(){return fabricState.finish==='gloss'?[glossCF,glossPB,glossPF,glossPB,glossBA,glossSP]:[matCoverF,matPlainB,matPlainF,matPlainB,matBackA,matSpine]}
 function applyFinish(){
   var m=coverMats();
@@ -784,5 +797,5 @@ requestAnimationFrame(frame);
 </div>
 <div class="sheet" id="more" role="dialog" aria-label="Ещё" hidden><div id="moreNav"></div><div id="moreList"></div></div>
 <div class="hintpill" id="toast" role="status" hidden>Листайте свайпом · щипок приближает</div>
-<script src="/ui.js?v=11"></script>
+<script src="/ui.js?v=12"></script>
 </html>

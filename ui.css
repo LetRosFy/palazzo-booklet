@@ -452,3 +452,20 @@ li.pg .t span { display: block; color: var(--muted); font-size: 11px; font-famil
   .seldlg { left: 0; top: auto; bottom: 0; transform: none; width: 100%; max-height: 82dvh; border-radius: 24px 24px 0 0; }
   .seldlg__foot { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* ═════ живое сравнение (десктоп) ═════ */
+.live-caps { display: none; }
+@media (min-width: 901px) {
+  #panelCmp .cmp-grid { display: none !important; }
+  .cmplive .stagecol .stagebox { position: fixed; z-index: 76; left: var(--pad); right: var(--pad); top: 68px; bottom: 208px; height: auto; }
+  .cmplive .stage .hint, .cmplive .nav, .cmplive .viewbar { display: none; }
+  .cmplive .stage canvas { z-index: 76; }
+  .cmplive .stagecol .stagebox { background: none; box-shadow: none; }
+  #panelCmp .cmp-empty { position: fixed; z-index: 77; left: 0; right: 0; top: 68px; bottom: 208px; pointer-events: none; }
+  #panelCmp .cmp-empty[hidden] { display: none; }
+  .cmp-head__sp ~ * { flex: none; }
+  #panelCmp { justify-content: space-between; }
+  .live-caps { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); flex: none; height: 40px; margin-top: auto; }
+  .live-caps > div { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; font-size: 14px; font-weight: 500; }
+  .live-caps span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

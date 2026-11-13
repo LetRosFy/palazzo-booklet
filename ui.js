@@ -300,28 +300,49 @@
     if (fromLink) { saveVotes(); try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} setTimeout(openSel, 1200); }
 
     var pick = document.getElementById('cmpPick'), grid = document.getElementById('cmpGrid'), tabCmp = document.getElementById('tabCmp');
+    var panelCmp = document.getElementById('panelCmp'), caps = document.getElementById('liveCaps'), cmpEmpty = document.getElementById('cmpEmpty');
+    function deskLive() { return MQ.d.matches && !MQ.l.matches && C.live; }
     C.list.forEach(function (v) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-id', v.id); b.setAttribute('aria-pressed', 'false');
       var im = document.createElement('img'); im.src = v.thumb; im.alt = ''; var s = document.createElement('span'); s.textContent = v.name;
-      b.appendChild(im); b.appendChild(s); b.addEventListener('click', function () { C.toggle(v.id); }); pick.appendChild(b);
+      b.appendChild(im); b.appendChild(s);
+      b.addEventListener('click', function () { if (deskLive()) C.live.toggle(v.id, syncPick); else C.toggle(v.id); });
+      pick.appendChild(b);
     });
     function syncPick() {
+      var live = deskLive(), ids = live ? C.live.ids() : null;
       Array.prototype.forEach.call(pick.children, function (b) {
-        var on = C.has(b.getAttribute('data-id')); b.setAttribute('aria-pressed', String(on)); b.disabled = !on && C.count() >= 3;
+        var id = b.getAttribute('data-id'), on = live ? ids.indexOf(id) >= 0 : C.has(id);
+        b.setAttribute('aria-pressed', String(on)); b.disabled = !on && (live ? ids.length : C.count()) >= 3;
+      });
+      if (!live) return;
+      cmpEmpty.hidden = ids.length > 0; caps.innerHTML = '';
+      ids.forEach(function (id) {
+        var v = C.list[idx(id)], d = document.createElement('div'), s = document.createElement('span'), x = document.createElement('button');
+        s.textContent = (idx(id) + 1 < 10 ? '0' : '') + (idx(id) + 1) + ' · ' + v.full;
+        x.type = 'button'; x.className = 'button button--icon-only button--sm button--ghost'; x.setAttribute('aria-label', 'Убрать из сравнения'); x.textContent = '✕';
+        x.addEventListener('click', function () { C.live.toggle(id, syncPick); });
+        d.appendChild(s); d.appendChild(x); caps.appendChild(d);
       });
     }
     new MutationObserver(syncPick).observe(grid, { childList: true });
+    function liveOff() { if (!document.body.classList.contains('cmplive')) return; document.body.classList.remove('cmplive'); if (C.live) C.live.stop(); window.dispatchEvent(new Event('resize')); }
     document.getElementById('cmpOpen').addEventListener('click', function () {
       if (tabCmp.getAttribute('aria-selected') !== 'true') tabCmp.click();
-      if (!C.count() && activeId()) C.toggle(activeId());
+      if (deskLive()) {
+        document.body.classList.add('cmplive'); window.dispatchEvent(new Event('resize'));
+        if (!C.live.ids().length && activeId()) C.live.toggle(activeId(), syncPick);
+      } else if (!C.count() && activeId()) C.toggle(activeId());
       syncPick();
     });
     document.getElementById('cmpClose').addEventListener('click', function () { if (tabCmp.getAttribute('aria-selected') === 'true') tabCmp.click(); });
+    new MutationObserver(function () { if (panelCmp.hidden) liveOff(); }).observe(panelCmp, { attributes: true, attributeFilter: ['hidden'] });
+    MQ.d.addEventListener && MQ.d.addEventListener('change', function () { if (!MQ.d.matches) liveOff(); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-cv]'), function (b) {
       b.addEventListener('click', function () {
         var name = b.getAttribute('data-cv'), sb = document.querySelector('[data-view="' + name + '"]'); if (sb) sb.click();
         Array.prototype.forEach.call(document.querySelectorAll('[data-cv]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-        if (C.count()) setTimeout(function () { C.sync(); }, 1700);
+        if (!deskLive() && C.count()) setTimeout(function () { C.sync(); }, 1700);
       });
     });
   }
