@@ -30,7 +30,7 @@
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/media.js?v=2"></script>
+<script src="/media.js?v=3"></script>
 <script>
 (function () {
   'use strict';
@@ -41,7 +41,7 @@
     ['booklet', -0.2, -3.15, 0.04, false], ['letterhead', -2.75, 0.25, 0.07, false], ['folder', -0.15, 0.05, -0.05, false],
     ['notebook', 2.15, -0.35, 0.09, false], ['envelope', 2.45, 1.75, -0.08, false], ['card', -0.55, 2.3, 0.14, false],
     ['keycard', 0.75, 2.4, -0.12, false], ['postcard', -2.7, 2.6, -0.06, false],
-    ['bag', -4.7, -2.0, 0.35, true], ['mug', 4.3, -1.9, 0.5, true], ['calendar', 4.5, 0.9, -0.5, true]
+    ['bag', -4.7, -2.0, 0.35, true], ['mug', 4.3, -1.9, -0.35, true], ['calendar', 4.5, 0.9, -0.5, true]
   ];
   var SETS = [
     { name: 'Айвори', note: 'Светлая основа, логотип золотой фольгой', base: 'ivory', logo: 'gold', coat: 'matte' },
@@ -64,15 +64,9 @@
   P.syncSelected();
 
   var cv = $('gl'), renderer, stage;
-  if (P.webgl() && T) { try { renderer = P.makeRenderer(cv, 4, 4); stage = P.makeScene(renderer); } catch (e) { renderer = null; } }
+  if (P.webgl() && T) { try { renderer = P.makeRenderer(cv, 4, 4); stage = P.makeScene(renderer, 2048); } catch (e) { renderer = null; } }
   if (!renderer) { $('nogl').hidden = false; paint(); return; }
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
-  stage.shadow.visible = false;
-  var sun = new T.DirectionalLight(0xffffff, 0.12); sun.position.set(-5, 11, 4); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.radius = 5; sun.shadow.bias = -0.0006;
-  var sc = sun.shadow.camera; sc.left = -9; sc.right = 9; sc.top = 9; sc.bottom = -9; sc.near = 1; sc.far = 30; stage.scene.add(sun);
-  var floor = new T.Mesh(new T.PlaneGeometry(60, 60), new T.ShadowMaterial({ opacity: 0.22 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; stage.scene.add(floor);
-
+  stage.shadow.visible = false; stage.hemi.intensity = 0.3; stage.key.intensity = 0.26;   // носители лежат лицом к свету — он здесь мягче
   var table = new T.Group(), need = true, picks = []; stage.scene.add(table);
   function paint() { sbtns.forEach(function (b, i) { b.setAttribute('aria-pressed', i === si ? 'true' : 'false'); }); $('note').textContent = SETS[si].note; }
   function apply() {
@@ -97,7 +91,7 @@
   function render() {
     var a = cv.width / cv.height, tall = a < 1, d = (tall ? 21.5 * Math.max(1, 0.8 / a) : 18.5 * Math.max(1, 1.55 / a)) / zoom, el = tall ? 1.0 : 0.9;
     stage.cam.fov = 30; stage.cam.aspect = a; stage.cam.position.set(0, Math.sin(el) * d, Math.cos(el) * d); stage.cam.lookAt(0, 0, tall ? 0 : -0.7); stage.cam.updateProjectionMatrix();
-    table.rotation.y = yaw; renderer.render(stage.scene, stage.cam);
+    table.rotation.y = yaw; P.lightFor(stage, 6.2, 0); renderer.render(stage.scene, stage.cam);
   }
   function zoomBy(k) { tz = Math.max(0.6, Math.min(3, tz * k)); }
   $('zin').addEventListener('click', function () { zoomBy(1.2); }); $('zout').addEventListener('click', function () { zoomBy(1 / 1.2); });
