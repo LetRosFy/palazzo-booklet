@@ -127,7 +127,7 @@
   .p-item .now strong { font-size: 17px; }
   .p-item .viewbar { left: 10px; right: 10px; bottom: 10px; width: auto; max-width: none; }
   .p-item .viewbar .separator, .p-item .viewbar #zin, .p-item .viewbar #zout, .p-item .viewbar #auto { display: none; }
-  .p-item .viewbar > .toggle-button { flex: 1 1 0; height: 40px; padding-inline: 4px; }
+  .p-item .viewbar > .toggle-button { flex: 1 0 auto; height: 40px; padding-inline: 8px; }
   .p-item .picker { padding: 8px 10px; }
   .p-item .picker__h { display: none; }
   .vr { flex-basis: 96px; padding: 4px; }

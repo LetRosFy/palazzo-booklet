@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/heroui.min.css?v=12">
 <link rel="stylesheet" href="/ui.css?v=12">
-<link rel="stylesheet" href="/media.css?v=2">
+<link rel="stylesheet" href="/media.css?v=3">
 <body class="p-home">
 <div class="shell">
   <header class="top">
@@ -48,7 +48,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/api/catalog"></script>
 <script src="/vendor/GLTFLoader.js"></script>
-<script src="/media.js?v=5"></script>
+<script src="/media.js?v=6"></script>
 <script>
 (function () {
   'use strict';
@@ -142,7 +142,7 @@
     if (t.cv.width !== w || t.cv.height !== h) { t.cv.width = w; t.cv.height = h; }
     if (gl.width !== w || gl.height !== h) renderer.setSize(w, h, false);
     stage.scene.add(hd);
-    P.frameIt(stage, hd, w / h, scale ? 0.92 * hd.userData.radius / rmax : 0.86, t.yaw, 0.14);
+    P.frameIt(stage, hd, w / h, scale ? 0.92 * hd.userData.radius / rmax : 0.86, t.yaw, t.it.model.pitch != null ? t.it.model.pitch : 0.14);
     renderer.render(stage.scene, stage.cam);
     stage.scene.remove(hd);
     t.ctx.clearRect(0, 0, w, h); t.ctx.drawImage(gl, 0, 0);
