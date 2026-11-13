@@ -400,3 +400,8 @@ li.pg .t span { display: block; color: var(--muted); font-size: 11px; font-famil
 .present .stagebox { border-radius: 0; height: 100%; box-shadow: none; }
 .present .present-cap { display: block; position: absolute; z-index: 2; top: 16px; left: 20px; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; }
 .present .present-cap:empty { display: none; }
+
+/* лента обложек: все полки на одной линии, подпись всегда в две строки */
+.variants { align-items: flex-start; }
+.variant { align-self: flex-start; }
+.variant .nm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.5em; }

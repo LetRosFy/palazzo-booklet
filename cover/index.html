@@ -6,8 +6,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/heroui.min.css?v=9">
-<link rel="stylesheet" href="/ui.css?v=9">
+<link rel="stylesheet" href="/heroui.min.css?v=10">
+<link rel="stylesheet" href="/ui.css?v=10">
 <body class="p-cover">
 <div class="shell">
   <header class="top">
@@ -578,7 +578,7 @@
       var lg = document.createElement('span'); lg.className = 'ledge';
       var t = document.createElement('span'); t.className = 'name';
       var cd = document.createElement('span'); cd.className = 'code'; cd.textContent = String(VARIANTS.indexOf(v) + 1).padStart(2, '0') + ' · ' + v.code;
-      t.appendChild(cd); t.appendChild(document.createTextNode(v.short)); b.setAttribute('data-tip', v.name + '. ' + v.note); b.setAttribute('data-tip-side', 'bottom'); b.setAttribute('aria-label', v.name);
+      t.appendChild(cd); var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = v.short; t.appendChild(nm); b.setAttribute('data-tip', v.name + '. ' + v.note); b.setAttribute('data-tip-side', 'bottom'); b.setAttribute('aria-label', v.name);
       b.appendChild(bk); b.appendChild(lg); b.appendChild(t);
       b.addEventListener('click', function () { if (v.id !== activeId) showVariant(v.id); });
       list.appendChild(b);
@@ -764,5 +764,5 @@
 <div class="scrim" id="scrim" hidden></div>
 <div class="sheet" id="more" role="dialog" aria-label="Ещё" hidden><div id="moreNav"></div><div id="moreList"></div></div>
 <div class="hintpill" id="toast" role="status" hidden>Вращайте книгу пальцем · свайп по названию листает обложки</div>
-<script src="/ui.js?v=9"></script>
+<script src="/ui.js?v=10"></script>
 </html>
