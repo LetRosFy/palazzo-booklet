@@ -200,6 +200,105 @@
       else window.prompt('Ссылка на обложку', url);
     });
 
+    // примерка отделки
+    Array.prototype.forEach.call(document.querySelectorAll('[data-opt]'), function (g) {
+      g.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-val]'); if (!b) return;
+        Array.prototype.forEach.call(g.querySelectorAll('button[data-val]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        var k = g.getAttribute('data-opt'), val = b.getAttribute('data-val');
+        if (k === 'ribbon') val = val ? val.split(',').map(Number) : null;
+        C.finish(k, val);
+      });
+    });
+    // следующая и предыдущая обложки подгружаются заранее, чтобы листание не ждало сети
+    function warm(id) { var u = C.urls(id); if (!u) return; ['art', 'foil', 'bump'].forEach(function (k) { if (u[k]) { var im = new Image(); im.src = u[k]; } }); }
+    function warmAround() { var i = idx(activeId()); if (i < 0) return; var n = C.list.length; warm(C.list[(i + 1) % n].id); warm(C.list[(i + n - 1) % n].id); }
+    setTimeout(warmAround, 1500);
+
+    // выбор клиента: оценка и комментарий по каждой обложке, хранится в браузере и передаётся ссылкой
+    var VK = 'palazzo-votes', votes = {};
+    try { votes = JSON.parse(localStorage.getItem(VK) || '{}') || {}; } catch (e) { votes = {}; }
+    function b64e(s) { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+    function b64d(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return decodeURIComponent(escape(atob(s))); }
+    var fromLink = false;
+    try {
+      var sp = new URLSearchParams(location.search).get('sel');
+      if (sp) { var inc = JSON.parse(b64d(sp)); if (inc && typeof inc === 'object') { votes = inc; fromLink = true; } }
+    } catch (e) {}
+    function saveVotes() { try { localStorage.setItem(VK, JSON.stringify(votes)); } catch (e) {} }
+    function vget(id) { return votes[id] || {}; }
+    function vset(id, patch) {
+      var o = votes[id] || {}; for (var k in patch) o[k] = patch[k];
+      if (!o.v && !o.c) delete votes[id]; else votes[id] = o;
+      saveVotes(); paintVotes();
+    }
+    var vy = document.getElementById('voteYes'), vn = document.getElementById('voteNo'), vt = document.getElementById('voteNote'), vq = document.getElementById('voteQuick'), sc = document.getElementById('selCount');
+    function paintVotes() {
+      var id = activeId(), cur = vget(id);
+      vy.setAttribute('aria-pressed', String(cur.v === 'yes')); vn.setAttribute('aria-pressed', String(cur.v === 'no')); vq.setAttribute('aria-pressed', String(cur.v === 'yes'));
+      if (document.activeElement !== vt) vt.value = cur.c || '';
+      Array.prototype.forEach.call(vlist.querySelectorAll('.variant'), function (b) {
+        var v = vget(b.getAttribute('data-id')).v; if (v) { if (b.getAttribute('data-vote') !== v) b.setAttribute('data-vote', v); } else if (b.hasAttribute('data-vote')) b.removeAttribute('data-vote');
+      });
+      var n = C.list.filter(function (x) { return vget(x.id).v === 'yes'; }).length;
+      sc.textContent = n; if (n) sc.removeAttribute('data-zero'); else sc.setAttribute('data-zero', '');
+    }
+    vy.addEventListener('click', function () { var id = activeId(); vset(id, { v: vget(id).v === 'yes' ? null : 'yes' }); });
+    vn.addEventListener('click', function () { var id = activeId(); vset(id, { v: vget(id).v === 'no' ? null : 'no' }); });
+    vq.addEventListener('click', function () { var id = activeId(); vset(id, { v: vget(id).v === 'yes' ? null : 'yes' }); });
+    vt.addEventListener('input', function () { vset(activeId(), { c: vt.value.slice(0, 600) }); });
+    new MutationObserver(function () { paintVotes(); warmAround(); }).observe(vlist, { subtree: true, attributes: true, attributeFilter: ['aria-pressed'], childList: true });
+    paintVotes();
+
+    var dlg = document.getElementById('selDlg'), body = document.getElementById('selBody');
+    function num(id) { var n = idx(id) + 1; return (n < 10 ? '0' : '') + n; }
+    function rowsOf(kind) { return C.list.filter(function (x) { return vget(x.id).v === kind; }); }
+    function fillSel() {
+      body.innerHTML = '';
+      var yes = rowsOf('yes'), no = rowsOf('no'), noted = C.list.filter(function (x) { var o = vget(x.id); return !o.v && o.c; });
+      if (!yes.length && !no.length && !noted.length) {
+        var p = document.createElement('p'); p.className = 'selempty'; p.textContent = 'Пока ничего не отмечено. Откройте обложку и нажмите «Нравится» или «Не подходит», при желании добавьте комментарий.'; body.appendChild(p); return;
+      }
+      [['Нравится', yes], ['Не подходит', no], ['Только комментарий', noted]].forEach(function (g) {
+        if (!g[1].length) return;
+        var h = document.createElement('h4'); h.textContent = g[0] + ' · ' + g[1].length; body.appendChild(h);
+        g[1].forEach(function (x) {
+          var r = document.createElement('button'); r.type = 'button'; r.className = 'selrow';
+          var im = document.createElement('img'); im.src = x.thumb; im.alt = '';
+          var d = document.createElement('span'), sm = document.createElement('small'), b = document.createElement('b');
+          sm.textContent = num(x.id) + ' · ' + x.code; b.textContent = x.full; d.appendChild(sm); d.appendChild(b);
+          if (vget(x.id).c) { var q = document.createElement('q'); q.textContent = vget(x.id).c; d.appendChild(q); }
+          r.appendChild(im); r.appendChild(d); r.addEventListener('click', function () { C.show(x.id); closeSel(); }); body.appendChild(r);
+        });
+      });
+    }
+    function selText() {
+      var out = ['Палаццо де Агой — выбор обложек'];
+      [['Нравится', rowsOf('yes')], ['Не подходит', rowsOf('no')]].forEach(function (g) {
+        if (!g[1].length) return; out.push('', g[0] + ':');
+        g[1].forEach(function (x) { out.push(num(x.id) + ' · ' + x.full + ' (' + x.code + ')' + (vget(x.id).c ? ' — ' + vget(x.id).c : '')); });
+      });
+      C.list.forEach(function (x) { var o = vget(x.id); if (!o.v && o.c) out.push('', num(x.id) + ' · ' + x.full + ' — ' + o.c); });
+      return out.join('\n');
+    }
+    function copy(text, okMsg) {
+      var done = function () { say(okMsg); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { window.prompt('Скопируйте', text); });
+      else window.prompt('Скопируйте', text);
+    }
+    function openSel() { fillSel(); dlg.hidden = false; if (scrim) scrim.hidden = false; }
+    function closeSel() { if (dlg.hidden) return; dlg.hidden = true; if (scrim && (!more || more.hidden)) scrim.hidden = true; }
+    document.getElementById('selOpen').addEventListener('click', function () { setTimeout(openSel, 10); });
+    document.getElementById('selClose').addEventListener('click', closeSel);
+    if (scrim) scrim.addEventListener('click', closeSel);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSel(); });
+    document.getElementById('selCopy').addEventListener('click', function () { copy(selText(), 'Список скопирован'); });
+    document.getElementById('selLink').addEventListener('click', function () {
+      copy(location.origin + location.pathname + '?sel=' + b64e(JSON.stringify(votes)), 'Ссылка с выбором скопирована');
+    });
+    document.getElementById('selClear').addEventListener('click', function () { votes = {}; saveVotes(); paintVotes(); fillSel(); });
+    if (fromLink) { saveVotes(); try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} setTimeout(openSel, 1200); }
+
     var pick = document.getElementById('cmpPick'), grid = document.getElementById('cmpGrid'), tabCmp = document.getElementById('tabCmp');
     C.list.forEach(function (v) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-id', v.id); b.setAttribute('aria-pressed', 'false');
