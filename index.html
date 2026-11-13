@@ -202,8 +202,8 @@ var glossCF=glossMat(texFront,THREE.FrontSide,false),glossBA=glossMat(texBackA,T
 function loadMap(src,cb){var im=new Image();im.onload=function(){var t=new THREE.Texture(im);t.anisotropy=maxAniso;t.needsUpdate=true;cb(t)};im.src=src}
 function foilMaps(sfx,gl,fb){
   loadMap('bc/'+CVID+'-'+sfx+'o.png',function(t){
-    gl.metalnessMap=t;gl.roughnessMap=t;gl.metalness=1;gl.roughness=1;gl.needsUpdate=true;
-    fb.metalnessMap=t;fb.metalness=1;fb.envMap=envTex;fb.envMapIntensity=.7;fb.needsUpdate=true;
+    gl.metalnessMap=t;gl.roughnessMap=t;gl.metalness=.42;gl.roughness=1;gl.needsUpdate=true;
+    fb.metalnessMap=t;fb.metalness=.42;fb.envMap=envTex;fb.envMapIntensity=.7;fb.needsUpdate=true;
   });
 }
 foilMaps('f',glossCF,matCoverF);foilMaps('b',glossBA,matBackA);foilMaps('s',glossSP,matSpine);
