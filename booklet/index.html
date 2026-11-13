@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/heroui.min.css?v=12">
 <link rel="stylesheet" href="/ui.css?v=12">
-<link rel="stylesheet" href="/media.css?v=1">
+<link rel="stylesheet" href="/media.css?v=2">
 <body class="p-book">
 <div id="rotate" role="alert">
   <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="20" y="8" width="24" height="40" rx="4"/><path d="M30 42h4"/><path d="M12 54c6 6 18 7 28 2M42 59l-3-4 5-1"/></svg>
@@ -800,4 +800,6 @@ requestAnimationFrame(frame);
 <div class="sheet" id="more" role="dialog" aria-label="Ещё" hidden><div id="moreNav"></div><div id="moreList"></div></div>
 <div class="hintpill" id="toast" role="status" hidden>Листайте свайпом · щипок приближает</div>
 <script src="/ui.js?v=13"></script>
+<script src="/media.js?v=2"></script>
+<script>(function () { var l = document.querySelector(".top__l"); PDA.mountNav(l, "booklet", l.querySelector(".tabs")); })();</script>
 </html>

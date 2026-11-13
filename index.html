@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/heroui.min.css?v=12">
 <link rel="stylesheet" href="/ui.css?v=12">
-<link rel="stylesheet" href="/media.css?v=1">
+<link rel="stylesheet" href="/media.css?v=2">
 <body class="p-home">
 <div class="shell">
   <header class="top">
@@ -25,96 +25,138 @@
       <h2>Фирменные носители</h2>
       <p>Вся продукция бренда в одном месте. Откройте носитель, чтобы покрутить его в 3D, примерить отделку и скачать шаблоны для печати.</p>
     </div>
-    <div class="hero__stat"><span><b id="statAll">0</b>носителей</span><span><b id="statReady">0</b>готово</span></div>
+    <div class="hero__stat"><span><b id="statAll">0</b>носителей</span><span><b id="statPrint">0</b>готово к печати</span></div>
   </section>
 
-  <div class="filters" id="filters" role="group" aria-label="Группа носителей"></div>
-  <main class="grid" id="grid"></main>
-  <p class="foot">Носители с пометкой «Заглушка» показывают форму и размер, оформление условное. Макеты добавляются по мере готовности.</p>
+  <a class="kitlink" href="/kit/"><b>Комплект</b><span>Все носители вместе на одном столе, в одной отделке</span><i>Открыть сцену<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></a>
+
+  <div class="tools">
+    <div class="filters" id="filters" role="group" aria-label="Группа носителей"></div>
+    <div class="tools__r">
+      <label class="search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><input id="q" type="search" placeholder="Найти носитель" aria-label="Найти носитель" autocomplete="off"></label>
+      <button type="button" class="toggle-button toggle-button--sm" id="scaleBtn" aria-pressed="false" title="Показать носители в настоящих пропорциях друг к другу">В масштабе</button>
+      <div class="toggle-button-group toggle-button-group--horizontal" role="group" aria-label="Вид каталога">
+        <button type="button" class="toggle-button toggle-button--sm" data-mode="grid" aria-pressed="true">Сетка</button>
+        <button type="button" class="toggle-button toggle-button--sm" data-mode="list" aria-pressed="false">Список</button>
+      </div>
+    </div>
+  </div>
+  <main class="grid" id="grid"><p class="empty" id="empty" hidden>Ничего не нашлось. Попробуйте другое слово или сбросьте группу.</p></main>
+  <p class="foot">Оформление носителей со статусом «Макет в работе» условное: форма и размер настоящие, логотип и вёрстка заменятся утверждёнными макетами.</p>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/media.js?v=1"></script>
+<script src="/media.js?v=2"></script>
 <script>
 (function () {
   'use strict';
-  var P = window.PDA, grid = document.getElementById('grid'), filters = document.getElementById('filters');
+  var P = window.PDA, grid = document.getElementById('grid'), filters = document.getElementById('filters'), empty = document.getElementById('empty');
   var ARROW = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>';
   function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
   function plural(n) { var a = n % 10, b = n % 100; return a === 1 && b !== 11 ? 'вариант' : a >= 2 && a <= 4 && (b < 12 || b > 14) ? 'варианта' : 'вариантов'; }
 
   // карточки
   var tiles = P.ITEMS.map(function (it) {
-    var a = el('a', 'tile'); a.href = it.href || '/item/?id=' + it.id; a.setAttribute('data-group', it.group);
-    var stage = el('div', 'tile__stage'), cv = el('canvas');
+    var a = el('a', 'tile'); a.href = P.href(it);
+    var stage = el('div', 'tile__stage loading'), cv = el('canvas');
     cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', it.name + ', 3D-превью');
     stage.appendChild(cv);
-    stage.appendChild(el('span', 'chip chip--sm ' + (it.stub ? 'stub' : 'ready'), it.stub ? 'Заглушка' : 'Готово'));
+    stage.appendChild(el('span', 'chip chip--sm st-' + it.status, P.STATUS[it.status]));
     stage.appendChild(el('span', 'tile__go glass', 'Открыть' + ARROW));
     a.appendChild(stage);
-    var meta = el('div', 'tile__meta');
+    var meta = el('div', 'tile__meta'), fs = P.filesState(it);
     meta.appendChild(el('span', 'tile__name', it.name));
     meta.appendChild(el('span', 'tile__count', it.count || it.variants.length + ' ' + plural(it.variants.length)));
     meta.appendChild(el('span', 'tile__size', it.size));
-    a.appendChild(meta); grid.appendChild(a);
-    return { it: it, a: a, cv: cv, ctx: cv.getContext('2d'), yaw: -0.5, to: -0.5, seen: false, hover: false, dirty: true, holder: null };
+    meta.appendChild(el('span', 'tile__st', P.STATUS[it.status]));
+    if (fs.text) meta.appendChild(el('span', 'tile__files' + (fs.ready ? ' has' : ''), fs.text));
+    a.appendChild(meta); grid.insertBefore(a, empty);
+    return { it: it, a: a, stage: stage, cv: cv, ctx: cv.getContext('2d'), yaw: -0.5, to: -0.5, seen: false, hover: false, drag: null, dirty: true, holder: null,
+      text: (it.name + ' ' + it.size + ' ' + P.group(it.group).name).toLowerCase() };
   });
   document.getElementById('statAll').textContent = P.ITEMS.length;
-  document.getElementById('statReady').textContent = P.ITEMS.filter(function (i) { return !i.stub; }).length;
+  document.getElementById('statPrint').textContent = P.ITEMS.filter(function (i) { return i.status === 'print'; }).length;
 
-  // фильтр по группам
-  var cur = 'all';
+  // группа, поиск, вид — запоминаются
+  var cur = P.store('group') || 'all', mode = P.store('mode') === 'list' ? 'list' : 'grid', scale = P.store('scale') === '1', q = document.getElementById('q');
+  function refresh() {
+    var needle = q.value.trim().toLowerCase(), shown = 0;
+    tiles.forEach(function (t) {
+      var ok = (cur === 'all' || t.it.group === cur) && (!needle || t.text.indexOf(needle) >= 0);
+      t.a.hidden = !ok; t.dirty = true; if (ok) shown++;
+    });
+    empty.hidden = shown > 0;
+    Array.prototype.forEach.call(filters.children, function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-g') === cur ? 'true' : 'false'); });
+    grid.classList.toggle('list', mode === 'list');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-mode]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === mode ? 'true' : 'false'); });
+    document.getElementById('scaleBtn').setAttribute('aria-pressed', scale ? 'true' : 'false');
+  }
   [{ id: 'all', name: 'Все' }].concat(P.GROUPS).forEach(function (g) {
     var n = g.id === 'all' ? P.ITEMS.length : P.ITEMS.filter(function (i) { return i.group === g.id; }).length;
     if (!n) return;
     var b = el('button', 'toggle-button toggle-button--sm', g.name + '<span class="n">' + n + '</span>');
-    b.type = 'button'; b.setAttribute('data-g', g.id); b.setAttribute('aria-pressed', g.id === 'all' ? 'true' : 'false');
-    b.addEventListener('click', function () {
-      cur = g.id;
-      Array.prototype.forEach.call(filters.children, function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
-      tiles.forEach(function (t) { t.a.hidden = cur !== 'all' && t.it.group !== cur; t.dirty = true; });
-    });
+    b.type = 'button'; b.setAttribute('data-g', g.id);
+    b.addEventListener('click', function () { cur = g.id; P.store('group', cur); refresh(); });
     filters.appendChild(b);
   });
-  P.syncSelected();
+  if (!filters.querySelector('[data-g="' + cur + '"]')) cur = 'all';
+  q.addEventListener('input', refresh);
+  Array.prototype.forEach.call(document.querySelectorAll('[data-mode]'), function (b) { b.addEventListener('click', function () { mode = b.getAttribute('data-mode'); P.store('mode', mode); refresh(); }); });
+  document.getElementById('scaleBtn').addEventListener('click', function () { scale = !scale; P.store('scale', scale ? '1' : ''); refresh(); });
+  P.syncSelected(); refresh();
 
   // 3D: один WebGL-рендерер на все карточки, кадр копируется в 2D-холст карточки
-  if (!P.webgl() || !window.THREE) return;
+  function noGL() { tiles.forEach(function (t) { t.stage.classList.remove('loading'); }); }
+  if (!P.webgl() || !window.THREE) return noGL();
   var gl = document.createElement('canvas'), renderer, stage;
-  try { renderer = P.makeRenderer(gl, 4, 4); stage = P.makeScene(renderer); } catch (e) { return; }
+  try { renderer = P.makeRenderer(gl, 4, 4); stage = P.makeScene(renderer); } catch (e) { return noGL(); }
   var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var io = new IntersectionObserver(function (list) {
     list.forEach(function (en) { var t = tiles[+en.target.getAttribute('data-i')]; t.seen = en.isIntersecting; t.dirty = true; });
   }, { rootMargin: '120px' });
   tiles.forEach(function (t, i) {
     t.cv.setAttribute('data-i', i); io.observe(t.cv);
-    t.a.addEventListener('pointerenter', function () { t.hover = true; });
-    t.a.addEventListener('pointerleave', function () { t.hover = false; t.to = -0.5; });
-    t.a.addEventListener('pointermove', function (e) { if (e.pointerType !== 'mouse') return; var r = t.cv.getBoundingClientRect(); t.to = ((e.clientX - r.left) / r.width - 0.5) * 2.4; });
+    t.a.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') t.hover = true; });
+    t.a.addEventListener('pointerleave', function () { t.hover = false; });
+    t.a.addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'mouse') { var r = t.cv.getBoundingClientRect(); t.to = ((e.clientX - r.left) / r.width - 0.5) * 2.4; return; }
+      if (!t.drag) return;                       // палец: горизонтальный жест крутит модель, вертикальный листает страницу
+      var dx = e.clientX - t.drag.x; if (Math.abs(dx) > 8) t.drag.moved = true;
+      if (t.drag.moved) { t.hover = true; t.to = t.drag.yaw + dx * 0.012; }
+    });
+    t.stage.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') t.drag = { x: e.clientX, yaw: t.yaw, moved: false }; });
+    var end = function () { if (t.drag) { t.block = t.drag.moved; t.drag = null; setTimeout(function () { t.hover = false; t.block = false; }, 1400); } };
+    t.stage.addEventListener('pointerup', end); t.stage.addEventListener('pointercancel', end);
+    t.a.addEventListener('click', function (e) { if (t.block) e.preventDefault(); });
   });
   window.addEventListener('resize', function () { tiles.forEach(function (t) { t.dirty = true; }); });
 
-  var last = 0;
+  var last = 0, rmax = 0;
+  function holder(t) { if (!t.holder) { t.holder = P.build(t.it, t.it.variants ? t.it.variants[0] : {}, function () { t.dirty = true; }); rmax = Math.max(rmax, t.holder.userData.radius); } return t.holder; }
   function draw(t) {
     var dpr = Math.min(window.devicePixelRatio || 1, 2), w = Math.round(t.cv.clientWidth * dpr), h = Math.round(t.cv.clientHeight * dpr);
     if (!w || !h) return;
-    if (!t.holder) { var v = t.it.variants ? t.it.variants[0] : {}; t.holder = P.build(t.it, v, function () { t.dirty = true; }); }
+    var hd = holder(t);
     if (t.cv.width !== w || t.cv.height !== h) { t.cv.width = w; t.cv.height = h; }
     if (gl.width !== w || gl.height !== h) renderer.setSize(w, h, false);
-    stage.scene.add(t.holder);
-    P.frameIt(stage, t.holder, w / h, 0.86, t.yaw, 0.14);
+    stage.scene.add(hd);
+    P.frameIt(stage, hd, w / h, scale ? 0.92 * hd.userData.radius / rmax : 0.86, t.yaw, 0.14);
     renderer.render(stage.scene, stage.cam);
-    stage.scene.remove(t.holder);
+    stage.scene.remove(hd);
     t.ctx.clearRect(0, 0, w, h); t.ctx.drawImage(gl, 0, 0);
+    t.stage.classList.remove('loading');
   }
+  var wasScale = null;
   function tick(now) {
     requestAnimationFrame(tick);
     var dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (scale !== wasScale) { if (scale) tiles.forEach(holder); wasScale = scale; tiles.forEach(function (t) { t.dirty = true; }); }
     tiles.forEach(function (t) {
       if (!t.seen || t.a.hidden) return;
       var before = t.yaw;
       if (t.hover) t.yaw += (t.to - t.yaw) * Math.min(1, dt * 7);
       else if (!still) { t.to = -0.5 + Math.sin(now / 2600 + t.cv.offsetLeft * 0.004) * 0.22; t.yaw += (t.to - t.yaw) * Math.min(1, dt * 3); }
+      else { t.yaw += (-0.5 - t.yaw) * Math.min(1, dt * 3); }
       if (t.dirty || Math.abs(t.yaw - before) > 0.0004) { draw(t); t.dirty = false; }
     });
   }

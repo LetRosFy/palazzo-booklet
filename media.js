@@ -35,9 +35,12 @@
     { name: 'Бордо · золото', note: 'Тёмная основа, логотип фольгой', base: 'bordeaux', logo: 'gold', coat: 'matte' },
     { name: 'Песок · печать', note: 'Логотип печатью в бордо', base: 'sand', logo: 'print', coat: 'matte' }
   ];
+  /* Статус носителя: draft → approved → print. Меняется одним полем status у носителя. */
+  var STATUS = { draft: 'Макет в работе', approved: 'Утверждён', print: 'Готов к печати' };
   var TBD = 'Будет указано с макетом';
   function stubFiles() {
     return [
+      /* когда файл готов: добавьте url: '/files/…' и date: 'ДД.ММ.ГГГГ' */
       { name: 'Печатный PDF', kind: 'PDF/X-4 · вылеты · метки' },
       { name: 'Исходник макета', kind: 'AI / INDD' },
       { name: 'Слои отделки', kind: 'Фольга · конгрев · высечка' },
@@ -46,7 +49,7 @@
   }
   function stub(id, group, name, size, model, extra) {
     var it = {
-      id: id, group: group, name: name, size: size, model: model, stub: true,
+      id: id, group: group, name: name, size: size, model: model, stub: true, status: 'draft',
       desc: 'Макет-заглушка: форма и размеры настоящие, оформление условное. Заменится, когда появится утверждённый макет.',
       spec: [['Формат', size], ['Материал', TBD], ['Печать', TBD], ['Отделка', TBD], ['Тираж', TBD]],
       variants: STUB_VARIANTS, files: stubFiles()
@@ -56,10 +59,10 @@
   }
 
   var ITEMS = [
-    { id: 'booklet', group: 'editions', name: 'Буклет', size: '270 × 245 мм', href: '/booklet/', count: 'Развороты',
+    { id: 'booklet', group: 'editions', name: 'Буклет', size: '270 × 245 мм', href: '/booklet/', count: 'Развороты', status: 'draft',
       model: { type: 'book', w: 270, h: 245, t: 7, front: '/cover-front.jpg', back: '/cover-back.jpg', spine: '/spine.jpg' },
       desc: 'Имиджевый буклет: листается в 3D, с выбором материала обложки.' },
-    { id: 'covers', group: 'editions', name: 'Обложки буклета', size: '270 × 245 мм', href: '/cover/', count: 'Варианты обложек',
+    { id: 'covers', group: 'editions', name: 'Обложки буклета', size: '270 × 245 мм', href: '/cover/', count: 'Варианты обложек', status: 'draft',
       model: { type: 'book', w: 270, h: 245, t: 15, front: '/cv/n01.art.jpg', back: null, spine: null, tint: '#EFE6D3' },
       desc: 'Варианты обложки с примеркой фольги, ламинации и обреза.' },
     stub('card', 'office', 'Визитка', '90 × 50 мм', { type: 'slab', w: 90, h: 50, t: 0.7, face: 'card' }),
@@ -326,7 +329,46 @@
       .observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: A });
   }
 
+  function href(it) { return it.href || '/item/?id=' + it.id; }
+  function filesState(it) {
+    var f = it.files || [], n = f.filter(function (x) { return x.url; }).length;
+    return { ready: n, total: f.length, text: !f.length ? '' : n ? 'Шаблоны: ' + n + ' из ' + f.length : 'Шаблоны ожидаются' };
+  }
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem('pda-' + k); localStorage.setItem('pda-' + k, v); } catch (e) { return null; } }
+  var CH = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{d}"/></svg>';
+  /* Переключатель носителей в шапке: список всех носителей и стрелки «предыдущий / следующий». Один и тот же на всех страницах. */
+  function mountNav(host, curId, before) {
+    var i = ITEMS.map(function (x) { return x.id; }).indexOf(curId), cur = ITEMS[i]; if (!host) return;
+    var wrap = document.createElement('div'); wrap.className = 'inav';
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'button button--sm button--secondary inav__btn';
+    btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-label', 'Выбрать носитель');
+    btn.innerHTML = '<span>' + (cur ? cur.name : 'Носители') + '</span>' + CH.replace('{d}', 'm4 6 4 4 4-4');
+    var menu = document.createElement('div'); menu.className = 'inav__menu card'; menu.hidden = true;
+    GROUPS.forEach(function (g) {
+      var list = ITEMS.filter(function (x) { return x.group === g.id; }); if (!list.length) return;
+      var h = document.createElement('p'); h.className = 'eyebrow'; h.textContent = g.name; menu.appendChild(h);
+      list.forEach(function (x) {
+        var a = document.createElement('a'); a.href = href(x); a.textContent = x.name;
+        var sm = document.createElement('small'); sm.textContent = x.size; a.appendChild(sm);
+        if (x.id === curId) a.setAttribute('aria-current', 'page'); menu.appendChild(a);
+      });
+    });
+    var kit = document.createElement('a'); kit.href = '/kit/'; kit.className = 'inav__kit'; kit.textContent = 'Комплект: все носители на столе'; menu.appendChild(kit);
+    function open(on) { menu.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); open(menu.hidden); });
+    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) open(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { open(false); btn.focus(); } });
+    wrap.appendChild(btn); wrap.appendChild(menu);
+    if (i >= 0) [[-1, 'M10 3 5 8l5 5', 'Предыдущий носитель'], [1, 'm6 3 5 5-5 5', 'Следующий носитель']].forEach(function (d) {
+      var t = ITEMS[(i + d[0] + ITEMS.length) % ITEMS.length], a = document.createElement('a');
+      a.className = 'button button--icon-only button--sm button--tertiary inav__step'; a.href = href(t); a.title = d[2] + ': ' + t.name; a.setAttribute('aria-label', d[2] + ': ' + t.name);
+      a.innerHTML = CH.replace('{d}', d[1]); wrap.appendChild(a);
+    });
+    if (before) host.insertBefore(wrap, before); else host.appendChild(wrap);
+  }
+
   window.PDA = {
+    STATUS: STATUS, href: href, filesState: filesState, store: store, mountNav: mountNav,
     PALETTE: PALETTE, LOGO: LOGO, COAT: COAT, GROUPS: GROUPS, ITEMS: ITEMS,
     item: function (id) { for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].id === id) return ITEMS[i]; return null; },
     group: function (id) { for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].id === id) return GROUPS[i]; return null; },

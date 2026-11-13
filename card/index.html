@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru" class="light" data-theme="light">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Палаццо де Агой · техкарточка</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/heroui.min.css?v=12">
+<link rel="stylesheet" href="/ui.css?v=12">
+<link rel="stylesheet" href="/media.css?v=2">
+<body class="p-tech">
+<div class="techbar">
+  <a class="button button--sm button--tertiary" id="back" href="/">← К носителю</a>
+  <div style="display:flex;gap:8px"><button type="button" class="button button--sm button--secondary" id="copy">Скопировать ссылку</button><button type="button" class="button button--sm button--primary" id="print">Печать / PDF</button></div>
+</div>
+<article class="sheetA4">
+  <header><div><p>Палаццо де Агой · техкарточка для типографии</p><h1 id="name"></h1></div><div id="meta"></div></header>
+  <section class="tech__views">
+    <figure><img id="imgF" alt="Лицевая сторона"><figcaption>Лицо</figcaption></figure>
+    <figure><img id="imgB" alt="Оборотная сторона"><figcaption>Оборот</figcaption></figure>
+  </section>
+  <section class="tech__cols">
+    <div><h2>Параметры</h2><dl id="spec"></dl></div>
+    <div><h2>Цвета носителя</h2><ul class="tech__pal" id="pal"></ul></div>
+  </section>
+  <section><h2>Файлы для печати</h2><ul class="tech__files" id="files"></ul></section>
+  <footer><span id="url"></span><span id="date"></span></footer>
+</article>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/media.js?v=2"></script>
+<script>
+(function () {
+  'use strict';
+  var P = window.PDA, $ = function (id) { return document.getElementById(id); }, q = new URLSearchParams(location.search), it = P.item(q.get('id'));
+  if (!it || it.href) { location.replace('/'); return; }
+  function el(tag, text) { var e = document.createElement(tag); if (text != null) e.textContent = text; return e; }
+  function pick(list, id) { return list.filter(function (x) { return x.id === id; })[0]; }
+  var vi = Math.max(0, Math.min(it.variants.length - 1, (parseInt(q.get('v'), 10) || 1) - 1)), v = it.variants[vi];
+  var opt = { base: it.fixedBase || v.base, logo: v.logo, coat: v.coat }, custom = false;
+  [['base', P.PALETTE], ['logo', P.LOGO], ['coat', P.COAT]].forEach(function (k) { var val = q.get(k[0]); if (val && pick(k[1], val) && !(k[0] === 'base' && it.fixedBase) && val !== opt[k[0]]) { opt[k[0]] = val; custom = true; } });
+  var itemUrl = '/item/' + location.search;
+  document.title = 'Техкарточка · ' + it.name; $('back').href = itemUrl; $('name').textContent = it.name;
+  $('meta').innerHTML = ''; [it.size, 'Вариант ' + (vi + 1) + ': ' + v.name + (custom ? ' · с примеркой' : ''), 'Статус: ' + P.STATUS[it.status]].forEach(function (t) { $('meta').appendChild(el('div', t)); });
+  var base = pick(P.PALETTE, opt.base), rows = it.spec.map(function (r) { return r.slice(); });
+  rows.push(['Основа', base.name + ' ' + base.hex], ['Логотип', pick(P.LOGO, opt.logo).name], ['Покрытие', pick(P.COAT, opt.coat).name], ['Вылеты', 'Будет указано с макетом'], ['Pantone', 'Будет указано с макетом']);
+  rows.forEach(function (r) { $('spec').appendChild(el('dt', r[0])); $('spec').appendChild(el('dd', r[1])); });
+  var cols = [base]; if (opt.logo === 'print') cols.push(pick(P.PALETTE, P.hexOf(opt.base) === '#FEEEDA' || opt.base === 'sand' || opt.base === 'greyblue' ? 'bordeaux' : 'ivory'));
+  if (opt.logo === 'gold') cols.push({ name: 'Muted Gold · фольга', hex: '#A67C3C' });
+  cols.forEach(function (c) { var li = el('li'), i = el('i'); i.style.background = c.hex; li.appendChild(i); li.appendChild(el('span', c.name)); li.appendChild(el('code', c.hex)); $('pal').appendChild(li); });
+  it.files.forEach(function (f) { var li = el('li'), a = el('span', f.name + ' — ' + f.kind); li.appendChild(a); li.appendChild(el('code', f.url ? location.origin + f.url + (f.date ? ' · ' + f.date : '') : 'ожидает загрузки')); $('files').appendChild(li); });
+  $('url').textContent = location.origin + itemUrl; $('date').textContent = 'Сформировано ' + new Date().toLocaleDateString('ru-RU');
+  $('print').addEventListener('click', function () { window.print(); });
+  $('copy').addEventListener('click', function () { var b = $('copy'); (navigator.clipboard ? navigator.clipboard.writeText(location.href) : Promise.reject()).then(function () { b.textContent = 'Скопировано'; setTimeout(function () { b.textContent = 'Скопировать ссылку'; }, 1800); }, function () { window.prompt('Ссылка на техкарточку', location.href); }); });
+  // виды: лицо и оборот, строго фронтально
+  if (!P.webgl() || !window.THREE) return;
+  try {
+    var cv = document.createElement('canvas'), r = P.makeRenderer(cv, 960, 720), s = P.makeScene(r), h = P.build(it, opt);
+    s.scene.add(h);
+    [['imgF', 0], ['imgB', Math.PI]].forEach(function (p) { P.frameIt(s, h, 4 / 3, 0.95, p[1], 0); r.render(s.scene, s.cam); $(p[0]).src = cv.toDataURL('image/png'); });
+    P.dispose(h); r.dispose();
+  } catch (e) {}
+})();
+</script>
