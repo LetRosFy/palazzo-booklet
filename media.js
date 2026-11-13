@@ -80,6 +80,36 @@
     stub('mug', 'gifts', 'Кружка', '330 мл · ⌀ 82 мм', { type: 'mug', r: 41, h: 95 })
   ];
 
+  /* ───── данные из админки (/admin) ─────
+     /api/catalog кладёт в window.PDA_DATA то, что сохранили в админке: тексты, статусы, варианты, макеты и файлы.
+     Встроенный каталог выше остаётся основой и запасным вариантом, если данные недоступны. */
+  var STUB_DESC = stub('', '', '', '', {}).desc;
+  var DEFAULTS = JSON.parse(JSON.stringify(ITEMS));
+  function hasArt(it) { return !!(it.front || it.back || (it.variants || []).some(function (v) { return v.front || v.back; })); }
+  function applyData(data) {
+    var byId = {}; ITEMS.forEach(function (it) { byId[it.id] = it; });
+    (data.items || []).forEach(function (d) {
+      var it = byId[d.id];
+      if (!it) { if (!d.custom || !d.model || !BUILD[d.model.type]) return; it = stub(d.id, d.group, d.name, d.size, d.model); it.custom = true; ITEMS.push(it); byId[d.id] = it; }
+      ['name', 'size', 'desc', 'status', 'group', 'front', 'back', 'fixedBase'].forEach(function (k) { if (d[k] != null && (d[k] !== '' || k === 'desc' || k === 'front' || k === 'back')) it[k] = d[k]; });
+      if (!STATUS[it.status]) it.status = 'draft';
+      if (!GROUPS.some(function (g) { return g.id === it.group; })) it.group = GROUPS[0].id;
+      it.hidden = !!d.hidden;
+      if (it.href) return; // буклет и обложки: у них свои страницы, из админки меняются только подписи и статус
+      if (d.spec) it.spec = d.spec;
+      if (d.variants && d.variants.length) it.variants = d.variants;
+      if (d.files) it.files = d.files;
+      it.stub = !hasArt(it);
+      if (!it.stub && it.desc === STUB_DESC) it.desc = '';
+    });
+    if (data.order && data.order.length) {
+      var pos = {}; data.order.forEach(function (id, i) { pos[id] = i; });
+      ITEMS.forEach(function (it, i) { it._i = i; });
+      ITEMS.sort(function (a, b) { return (pos[a.id] != null ? pos[a.id] : 1000 + a._i) - (pos[b.id] != null ? pos[b.id] : 1000 + b._i); });
+    }
+    for (var i = ITEMS.length - 1; i >= 0; i--) if (ITEMS[i].hidden) ITEMS.splice(i, 1);
+  }
+
   /* ───── цвет ───── */
   function hexOf(id) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].id === id) return PALETTE[i].hex; return id && id[0] === '#' ? id : '#FEEEDA'; }
   function rgb(hex) { var n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
@@ -183,6 +213,14 @@
      o: { back, label, rough, clearcoat } */
   function faceMaterial(wmm, hmm, face, s, o) {
     o = o || {};
+    // загруженный в админке макет заменяет условную грань: лицо — там, где стоит подпись заглушки, оборот — на оборотных гранях
+    var au = s.art && (o.back ? s.art.back : 'label' in o ? s.art.front : null);
+    if (au) {
+      var am = o.clearcoat ? new T.MeshPhysicalMaterial({ clearcoat: 1, clearcoatRoughness: 0.06 }) : new T.MeshStandardMaterial();
+      am.map = loadTex(au, s.redraw); if (o.flipY === false) am.map.flipY = false; am.roughness = o.rough != null ? o.rough : s.coat === 'gloss' ? 0.34 : 0.88; am.metalness = 0;
+      if (!o.clearcoat && s.coat !== 'gloss') { am.bumpMap = grainTex(3); am.bumpScale = 0.0025; }
+      return am;
+    }
     var k = 1024 / Math.max(wmm, hmm), W = Math.round(wmm * k), H = Math.round(hmm * k), back = !!o.back;
     var paint = typeof face === 'function' ? face : FACES[face] || FACES.center;
     var cv = canvas(W, H), c = cv.getContext('2d');
@@ -399,8 +437,8 @@
     mug: function (m, s, it) {
       var g = new T.Group(), R = m.r * U, h = m.h * U, wl = 3.6 * U, V = function (r, y) { return new T.Vector2(r, y); }, i, a, pts;
       var white = glaze('#FAF6EC'), body = glaze(s.base), seg = 96;
-      var s2 = { base: s.base, dark: s.dark, logo: s.logo, coat: 'gloss', sub: s.sub, print: s.print };
-      var wm = faceMaterial(m.r * 2 * Math.PI, m.h - 9, 'wrap', s2, { rough: 0.3, clearcoat: true }); wm.side = T.DoubleSide;
+      var s2 = { base: s.base, dark: s.dark, logo: s.logo, coat: 'gloss', sub: s.sub, print: s.print, art: s.art, redraw: s.redraw };
+      var wm = faceMaterial(m.r * 2 * Math.PI, m.h - 9, 'wrap', s2, { rough: 0.3, clearcoat: true, label: false }); wm.side = T.DoubleSide;
       var wall = new T.Mesh(new T.LatheGeometry([V(R, 6 * U), V(R, h - 3 * U)], seg), wm); wall.rotation.y = Math.PI; g.add(wall);
       pts = [V(0, 1.2 * U), V(R - 9 * U, 1.2 * U), V(R - 8 * U, 0), V(R - 6 * U, 0)];                       // донце с ножкой
       for (i = 0; i <= 8; i++) { a = -Math.PI / 2 + i / 8 * Math.PI / 2; pts.push(V(R - 6 * U + Math.cos(a) * 6 * U, 6 * U + Math.sin(a) * 6 * U)); }
@@ -433,6 +471,7 @@
     bag: { face_front: [bagFace, 240, 320], face_back: [bagFace, 240, 320, { back: true }] },
     mug: { face_wrap: ['wrap', 257.6, 86.7, { rough: 0.3, clearcoat: true, label: false, coat: 'gloss' }] }
   };
+  var MAIN_FACE = { face_front: 1, face_wrap: 1, face_cal: 1 };
   var GLB = {};
   function preload(ids) {
     if (!T.GLTFLoader) return Promise.resolve();
@@ -473,7 +512,7 @@
       if (!o.isMesh) return; var n = o.userData.mat;
       if (!cache[n]) {
         var f = faces[n];
-        if (f) { var fo = { flipY: false, label: item.stub && n !== 'face_back' }, k, s2 = s; for (k in f[3] || {}) fo[k] = f[3][k]; if (fo.coat) { s2 = {}; for (k in s) s2[k] = s[k]; s2.coat = fo.coat; } cache[n] = faceMaterial(f[1], f[2], f[0], s2, fo); }
+        if (f) { var fo = { flipY: false }, k, s2 = s; for (k in f[3] || {}) fo[k] = f[3][k]; if (MAIN_FACE[n]) fo.label = !!item.stub && fo.label !== false; else delete fo.label; if (fo.coat) { s2 = {}; for (k in s) s2[k] = s[k]; s2.coat = fo.coat; } cache[n] = faceMaterial(f[1], f[2], f[0], s2, fo); }
         else cache[n] = roleMaterial(n, s);
       }
       o.material = cache[n];
@@ -481,9 +520,14 @@
     var g = new T.Group(); root.scale.setScalar(10); g.add(root); g.updateMatrixWorld(true); return g;   // метры Blender → единицы сцены (1 мм = 0.01)
   }
 
-  /* Собирает модель носителя. opts: { base, logo, coat } */
+  /* Собирает модель носителя. opts: { base, logo, coat, front, back }.
+     Если в opts есть ключи front/back — это конкретный вариант, берём макет из него (или условное оформление, если макета нет).
+     Иначе — макет первого варианта, а без него общий для носителя. */
   function build(item, opts, redraw) {
-    var s = st(opts || {}), g = fromGLB(item, s) || BUILD[item.model.type](item.model, s, item, redraw);
+    opts = opts || {};
+    var v0 = (item.variants || [])[0] || {}, src = 'front' in opts || 'back' in opts ? opts : v0.front || v0.back ? v0 : item;
+    var s = st(opts); s.art = { front: src.front || null, back: src.back || null }; s.redraw = redraw;
+    var g = fromGLB(item, s) || BUILD[item.model.type](item.model, s, item, redraw);
     g.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     var box = new T.Box3().setFromObject(g), sph = box.getBoundingSphere(new T.Sphere());
     var holder = new T.Group(); g.position.sub(sph.center); holder.add(g);
@@ -598,9 +642,11 @@
     if (before) host.insertBefore(wrap, before); else host.appendChild(wrap);
   }
 
+  if (window.PDA_DATA && window.PDA_DATA.items && !window.PDA_ADMIN) { try { applyData(window.PDA_DATA); } catch (e) { if (window.console) console.error(e); } }
+
   window.PDA = {
     STATUS: STATUS, href: href, filesState: filesState, store: store, mountNav: mountNav,
-    PALETTE: PALETTE, LOGO: LOGO, COAT: COAT, GROUPS: GROUPS, ITEMS: ITEMS,
+    PALETTE: PALETTE, LOGO: LOGO, COAT: COAT, GROUPS: GROUPS, ITEMS: ITEMS, DEFAULTS: DEFAULTS, STUB_DESC: STUB_DESC,
     item: function (id) { for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].id === id) return ITEMS[i]; return null; },
     group: function (id) { for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].id === id) return GROUPS[i]; return null; },
     hexOf: hexOf, lightFor: lightFor, preload: preload, build: build, dispose: dispose, makeRenderer: makeRenderer, makeScene: makeScene, frameIt: frameIt, syncSelected: syncSelected,

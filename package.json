@@ -1,0 +1,9 @@
+{
+  "name": "palazzo-media",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Палаццо де Агой · платформа фирменных носителей",
+  "engines": { "node": "22.x" },
+  "scripts": { "dev": "node dev/server.js" },
+  "dependencies": { "@vercel/blob": "2.9.0" }
+}
