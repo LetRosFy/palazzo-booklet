@@ -6,18 +6,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/heroui.min.css?v=4">
-<link rel="stylesheet" href="/ui.css?v=4">
+<link rel="stylesheet" href="/heroui.min.css?v=7">
+<link rel="stylesheet" href="/ui.css?v=7">
 <body class="p-cover">
 <div class="shell">
   <header class="top">
     <div class="top__l">
       <h1 class="brand">Палаццо де Агой</h1>
-      <nav class="tabs" aria-label="Раздел" data-orientation="horizontal"><div class="tabs__list-container"><div class="tabs__list" data-orientation="horizontal"><a class="tabs__tab" href="/cover/" data-selected="true" aria-current="page">Обложки<span class="tabs__indicator"></span></a><a class="tabs__tab" href="/">Развороты<span class="tabs__indicator"></span></a></div></div></nav>
+      <nav class="tabs" aria-label="Раздел" data-orientation="horizontal" data-move="l:#moreNav"><div class="tabs__list-container"><div class="tabs__list" data-orientation="horizontal"><a class="tabs__tab" href="/cover/" data-selected="true" aria-current="page">Обложки<span class="tabs__indicator"></span></a><a class="tabs__tab" href="/">Развороты<span class="tabs__indicator"></span></a></div></div></nav>
     </div>
     <div class="top__r">
       <span class="chip mono">270 × 245 мм</span>
-      <button type="button" class="button button--sm button--tertiary" id="helpBtn" aria-expanded="false" aria-controls="helpPop"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.6 1.6c-.6.3-.9.7-.9 1.3"/><path d="M8 11.4v.1"/></svg><span class="lbl">Подсказки</span></button>
+      <button type="button" class="button button--sm button--tertiary" id="helpBtn" aria-expanded="false" aria-controls="helpPop" data-move="m:#moreList l:#moreList"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.6 1.6c-.6.3-.9.7-.9 1.3"/><path d="M8 11.4v.1"/></svg><span class="lbl">Подсказки</span></button>
+      <button type="button" class="button button--icon-only button--tertiary" id="moreBtn" aria-label="Ещё" aria-expanded="false" aria-controls="more"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg></button>
     </div>
   </header>
 
@@ -26,8 +27,8 @@
     <canvas id="gl"></canvas>
     <div class="hint">Тяните, чтобы вращать · колесо — масштаб · ← → обложки</div>
     <div class="dock">
-      <div class="now" aria-live="polite"><span class="cnt" id="nowCnt"></span><strong id="nowName"></strong><span class="nt" id="nowNote"></span></div>
-      <div class="tabs" data-orientation="horizontal"><div class="tabs__list-container"><div class="tabs__list" role="tablist" aria-label="Сведения об обложке" data-orientation="horizontal">
+      <div class="now" aria-live="polite" data-move="m:#capNow"><span class="cnt" id="nowCnt"></span><strong id="nowName"></strong><span class="nt" id="nowNote"></span></div>
+      <div class="tabs" data-orientation="horizontal" data-move="m:#capTabs"><div class="tabs__list-container"><div class="tabs__list" role="tablist" aria-label="Сведения об обложке" data-orientation="horizontal">
         <button type="button" class="tabs__tab" role="tab" id="tabSpec" aria-selected="false" aria-controls="panelSpec" data-tip="Материал, отделка и описание обложки. Повторное нажатие сворачивает." data-tip-side="bottom">Характеристики<span class="tabs__indicator"></span></button>
         <button type="button" class="tabs__tab" role="tab" id="tabCmp" aria-selected="false" aria-controls="panelCmp" data-tip="Поставить рядом до трёх обложек с одного ракурса" data-tip-side="bottom">Сравнение<span class="tabs__indicator"></span></button>
       </div></div></div>
@@ -45,8 +46,8 @@
         <p class="hintline" id="cmpHint"></p>
       </div>
     </div>
-    <button type="button" class="button button--icon-only fab nav nav-prev" id="prev" aria-label="Предыдущая обложка" data-tip="Предыдущая обложка · ←"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg></button>
-    <button type="button" class="button button--icon-only fab nav nav-next" id="next" aria-label="Следующая обложка" data-tip="Следующая обложка · →"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button>
+    <button type="button" class="button button--icon-only fab nav nav-prev" id="prev" data-move="m:#capPrev" aria-label="Предыдущая обложка" data-tip="Предыдущая обложка · ←"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg></button>
+    <button type="button" class="button button--icon-only fab nav nav-next" id="next" data-move="m:#capNext" aria-label="Следующая обложка" data-tip="Следующая обложка · →"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button>
     <div class="nogl" id="nogl" hidden>Браузер не смог запустить WebGL, 3D-вид недоступен.</div>
     <div class="viewbar glass pill" role="toolbar" aria-label="Ракурсы">
       <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" data-view="front" data-tip="Лицевая сторона прямо">Фронт</button>
@@ -54,15 +55,16 @@
       <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" data-view="spine" data-tip="Показать корешок">Корешок</button>
       <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" data-view="back" data-tip="Задняя сторона обложки">Оборот</button>
       <span class="separator separator--vertical" aria-hidden="true"></span>
-      <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="auto" aria-pressed="false" data-tip="Медленно вращать книгу">Вращать</button>
+      <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="auto" data-move="m:#moreList" aria-pressed="false" data-tip="Медленно вращать книгу">Вращать</button>
       <span class="separator separator--vertical" aria-hidden="true"></span>
-      <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="ribbon" aria-pressed="true" data-tip="Показать или скрыть ленту-закладку">Ляссе</button>
-      <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="studio" aria-pressed="false" data-tip="Посмотреть обложку на тёмном фоне">Тёмный фон</button>
+      <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="ribbon" data-move="m:#moreList" aria-pressed="true" data-tip="Показать или скрыть ленту-закладку">Ляссе</button>
+      <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="studio" data-move="m:#moreList" aria-pressed="false" data-tip="Посмотреть обложку на тёмном фоне">Тёмный фон</button>
       <span class="separator separator--vertical" aria-hidden="true"></span>
       <button type="button" class="button button--icon-only button--sm button--ghost" id="zout" aria-label="Отдалить" data-tip="Отдалить"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8h10"/></svg></button>
       <button type="button" class="button button--icon-only button--sm button--ghost" id="zin" aria-label="Приблизить" data-tip="Приблизить"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
     </div>
   </section>
+  <div class="cap" id="cap"><span id="capPrev"></span><div id="capNow"></div><span id="capNext"></span><div id="capTabs"></div></div>
   <aside class="card card--default picker" aria-label="Выбор обложки">
     <div class="chips" id="chips" role="group" aria-label="Группа обложек"></div>
     <div class="variants" id="variants"></div>
@@ -712,8 +714,12 @@
 </script>
 <div class="popover" id="helpPop" role="dialog" aria-label="Как смотреть обложки" hidden><div class="popover__dialog">
   <h2 class="popover__heading">Как смотреть обложки</h2>
-  <ul class="help"><li><span class="k"><kbd class="kbd">Тянуть</kbd></span><span>Вращайте книгу мышью или пальцем.</span></li><li><span class="k"><kbd class="kbd">Колесо</kbd><kbd class="kbd">+ −</kbd></span><span>Приближайте и отдаляйте.</span></li><li><span class="k"><kbd class="kbd">←</kbd><kbd class="kbd">→</kbd></span><span>Листайте обложки. Или выберите любую на полке справа.</span></li><li><span class="k"><kbd class="kbd">Ракурс</kbd></span><span>Кнопки внизу ставят книгу лицом, корешком или оборотом.</span></li><li><span class="k"><kbd class="kbd">Сравнение</kbd></span><span>Соберите до трёх обложек рядом с одного ракурса.</span></li><li><span class="k"><kbd class="kbd">Развороты</kbd></span><span>Вверху можно перейти к буклету и полистать страницы.</span></li></ul>
+  <ul class="help d"><li><span class="k"><kbd class="kbd">Тянуть</kbd></span><span>Вращайте книгу мышью или пальцем.</span></li><li><span class="k"><kbd class="kbd">Колесо</kbd><kbd class="kbd">+ −</kbd></span><span>Приближайте и отдаляйте.</span></li><li><span class="k"><kbd class="kbd">←</kbd><kbd class="kbd">→</kbd></span><span>Листайте обложки. Или выберите любую на полке справа.</span></li><li><span class="k"><kbd class="kbd">Ракурс</kbd></span><span>Кнопки внизу ставят книгу лицом, корешком или оборотом.</span></li><li><span class="k"><kbd class="kbd">Сравнение</kbd></span><span>Соберите до трёх обложек рядом с одного ракурса.</span></li><li><span class="k"><kbd class="kbd">Развороты</kbd></span><span>Вверху можно перейти к буклету и полистать страницы.</span></li></ul>
+  <ul class="help m"><li><span class="k"><kbd class="kbd">Палец</kbd></span><span>Вращайте книгу пальцем.</span></li><li><span class="k"><kbd class="kbd">Щипок</kbd></span><span>Сведите или разведите два пальца, чтобы изменить масштаб.</span></li><li><span class="k"><kbd class="kbd">Свайп</kbd></span><span>Проведите по названию под книгой, чтобы перейти к следующей обложке, или выберите её в ленте.</span></li><li><span class="k"><kbd class="kbd">Ракурс</kbd></span><span>Кнопки внизу сцены ставят книгу лицом, корешком или оборотом.</span></li><li><span class="k"><kbd class="kbd">⋯</kbd></span><span>В меню: вращение, ляссе, тёмный фон.</span></li><li><span class="k"><kbd class="kbd">Развороты</kbd></span><span>Вверху можно перейти к буклету.</span></li></ul>
   <button type="button" class="button button--primary button--sm button--full-width" id="helpOk">Понятно</button>
 </div></div>
-<script src="/ui.js?v=4"></script>
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="more" role="dialog" aria-label="Ещё" hidden><div id="moreNav"></div><div id="moreList"></div></div>
+<div class="hintpill" id="toast" role="status" hidden>Вращайте книгу пальцем · свайп по названию листает обложки</div>
+<script src="/ui.js?v=7"></script>
 </html>
