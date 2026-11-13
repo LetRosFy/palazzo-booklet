@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ru" class="light" data-theme="light">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Палаццо де Агой · носитель</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/heroui.min.css?v=12">
+<link rel="stylesheet" href="/ui.css?v=12">
+<link rel="stylesheet" href="/media.css?v=1">
+<body class="p-item">
+<div class="shell">
+  <header class="top">
+    <div class="top__l">
+      <h1 class="brand"><a href="/" title="Ко всем носителям"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Палаццо де Агой</a></h1>
+      <span class="crumb" id="crumb"></span>
+    </div>
+    <div class="top__r"><span class="chip mono" id="sizeChip"></span><span class="chip chip--sm stub" id="stubChip" hidden>Заглушка</span></div>
+  </header>
+
+  <div class="main">
+    <div class="stagecol">
+      <section class="stagebox stage" id="stage" aria-label="3D-модель носителя">
+        <canvas id="gl"></canvas>
+        <div class="hint">Тяните, чтобы вращать · колесо — масштаб · ← → варианты</div>
+        <div class="now" aria-live="polite"><span class="cnt" id="nowCnt"></span><strong id="nowName"></strong><span class="nt" id="nowNote"></span></div>
+        <button type="button" class="button button--icon-only fab nav nav-prev" id="prev" aria-label="Предыдущий вариант"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg></button>
+        <button type="button" class="button button--icon-only fab nav nav-next" id="next" aria-label="Следующий вариант"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button>
+        <div class="nogl" id="nogl" hidden>Браузер не смог запустить WebGL, 3D-вид недоступен. Характеристики и файлы доступны справа.</div>
+        <div class="viewbar glass pill" role="toolbar" aria-label="Ракурсы">
+          <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" data-view="front">Фронт</button>
+          <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" data-view="angle" aria-pressed="true">Ракурс</button>
+          <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" data-view="back">Оборот</button>
+          <span class="separator separator--vertical" aria-hidden="true"></span>
+          <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="auto" aria-pressed="false">Вращать</button>
+          <button type="button" class="toggle-button toggle-button--sm toggle-button--ghost" id="studio" aria-pressed="false">Тёмный фон</button>
+          <span class="separator separator--vertical" aria-hidden="true"></span>
+          <button type="button" class="button button--icon-only button--sm button--ghost" id="zout" aria-label="Отдалить"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8h10"/></svg></button>
+          <button type="button" class="button button--icon-only button--sm button--ghost" id="zin" aria-label="Приблизить"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
+        </div>
+      </section>
+      <aside class="card card--default picker" aria-label="Варианты носителя">
+        <div class="picker__h"><h2 class="eyebrow" style="margin:0">Варианты</h2><span class="hintline" id="varHint"></span></div>
+        <div class="variants" id="variants"></div>
+      </aside>
+    </div>
+
+    <aside class="card card--default info" id="info" aria-label="О носителе">
+      <div class="info__head"><p class="eyebrow" id="grp"></p><h2 id="title"></h2><p id="lead"></p></div>
+      <div class="tabs" data-orientation="horizontal"><div class="tabs__list-container"><div class="tabs__list" role="tablist" aria-label="Сведения о носителе" data-orientation="horizontal" id="tabs">
+        <button type="button" class="tabs__tab" role="tab" id="t-spec" aria-controls="p-spec" aria-selected="true">Данные<span class="tabs__indicator"></span></button>
+        <button type="button" class="tabs__tab" role="tab" id="t-opt" aria-controls="p-opt" aria-selected="false">Отделка<span class="tabs__indicator"></span></button>
+        <button type="button" class="tabs__tab" role="tab" id="t-files" aria-controls="p-files" aria-selected="false">Файлы<span class="tabs__indicator"></span></button>
+        <button type="button" class="tabs__tab" role="tab" id="t-rules" aria-controls="p-rules" aria-selected="false">Правила<span class="tabs__indicator"></span></button>
+      </div></div></div>
+
+      <div class="pane" id="p-spec" role="tabpanel" aria-labelledby="t-spec"><dl id="spec"></dl></div>
+
+      <div class="pane" id="p-opt" role="tabpanel" aria-labelledby="t-opt" hidden>
+        <div class="opt" id="optBase"><span>Цвет основы <b id="baseName"></b></span><div class="sws" id="sws" role="group" aria-label="Цвет основы"></div></div>
+        <div class="opt"><span>Логотип</span><div class="toggle-button-group toggle-button-group--horizontal toggle-button-group--full-width" role="group" aria-label="Способ нанесения логотипа" id="optLogo"></div></div>
+        <div class="opt"><span>Покрытие</span><div class="toggle-button-group toggle-button-group--horizontal toggle-button-group--full-width" role="group" aria-label="Покрытие" id="optCoat"></div></div>
+        <button type="button" class="button button--sm button--tertiary" id="optReset">Вернуть как в варианте</button>
+        <p class="note">Это примерка: цвета ограничены палитрой брендбука. Изменения видны только вам и попадают в ссылку, если её скопировать.</p>
+      </div>
+
+      <div class="pane" id="p-files" role="tabpanel" aria-labelledby="t-files" hidden>
+        <ul class="files" id="files"></ul>
+        <p class="note" id="filesNote"></p>
+      </div>
+
+      <div class="pane" id="p-rules" role="tabpanel" aria-labelledby="t-rules" hidden>
+        <h3 class="eyebrow" style="margin:0">Допустимые цвета</h3>
+        <ul class="rules" id="rules"></ul>
+        <p class="note">Правила размещения логотипа и охранные поля для этого носителя появятся вместе с утверждённым макетом.</p>
+      </div>
+
+      <div class="info__actions">
+        <button type="button" class="button button--sm button--primary" id="shot">Сохранить ракурс в PNG</button>
+        <button type="button" class="button button--sm button--secondary" id="copyLink">Скопировать ссылку на вариант</button>
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/media.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+  var P = window.PDA, $ = function (id) { return document.getElementById(id); };
+  var q = new URLSearchParams(location.search), it = P.item(q.get('id'));
+  if (!it || it.href) { location.replace(it && it.href ? it.href : '/'); return; }
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function say(t) { var x = $('toast'); x.textContent = t; x.hidden = false; clearTimeout(say.t); say.t = setTimeout(function () { x.hidden = true; }, 2200); }
+
+  // ───── состояние: вариант + примерка отделки ─────
+  var vi = Math.max(0, Math.min(it.variants.length - 1, (parseInt(q.get('v'), 10) || 1) - 1));
+  var opt = {};
+  function fromVariant() { var v = it.variants[vi]; opt = { base: it.fixedBase || v.base, logo: v.logo, coat: v.coat }; }
+  fromVariant();
+  ['base', 'logo', 'coat'].forEach(function (k) {
+    var val = q.get(k), list = k === 'base' ? P.PALETTE : k === 'logo' ? P.LOGO : P.COAT;
+    if (val && list.some(function (x) { return x.id === val; }) && !(k === 'base' && it.fixedBase)) opt[k] = val;
+  });
+  function changed() { var v = it.variants[vi]; return opt.base !== (it.fixedBase || v.base) || opt.logo !== v.logo || opt.coat !== v.coat; }
+  function url() {
+    var p = new URLSearchParams({ id: it.id, v: vi + 1 }), v = it.variants[vi];
+    if (opt.base !== (it.fixedBase || v.base)) p.set('base', opt.base);
+    if (opt.logo !== v.logo) p.set('logo', opt.logo);
+    if (opt.coat !== v.coat) p.set('coat', opt.coat);
+    return location.pathname + '?' + p.toString();
+  }
+
+  // ───── тексты ─────
+  document.title = 'Палаццо де Агой · ' + it.name.toLowerCase();
+  $('crumb').textContent = it.name; $('sizeChip').textContent = it.size; $('stubChip').hidden = !it.stub;
+  $('grp').textContent = P.group(it.group).name; $('title').textContent = it.name; $('lead').textContent = it.desc;
+  it.spec.forEach(function (r) { $('spec').appendChild(el('dt', '', r[0])); $('spec').appendChild(el('dd', '', r[1])); });
+  var ready = 0;
+  it.files.forEach(function (f) {
+    var li = el('li'); li.appendChild(el('b', '', f.name)); li.appendChild(el('small', '', f.kind));
+    if (f.url) { var a = el('a', 'button button--sm button--secondary', 'Скачать'); a.href = f.url; a.setAttribute('download', ''); li.appendChild(a); ready++; }
+    else li.appendChild(el('span', 'wait', 'Ожидает загрузки'));
+    $('files').appendChild(li);
+  });
+  $('filesNote').textContent = ready ? 'Файлы готовы к передаче в типографию.' : 'Шаблоны для печати появятся здесь, когда макет будет утверждён.';
+  P.PALETTE.forEach(function (c) {
+    var li = el('li'), i = el('i'); i.style.background = c.hex; li.appendChild(i);
+    li.appendChild(el('span', '', c.name + (c.print ? ' · только печать' : ''))); li.appendChild(el('code', '', c.hex)); $('rules').appendChild(li);
+  });
+
+  // вкладки
+  var tabs = Array.prototype.slice.call($('tabs').children);
+  function tab(t) { tabs.forEach(function (b) { var on = b === t; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; $(b.getAttribute('aria-controls')).hidden = !on; }); }
+  tabs.forEach(function (b, i) {
+    b.addEventListener('click', function () { tab(b); });
+    b.addEventListener('keydown', function (e) { var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return; var n = tabs[(i + d + tabs.length) % tabs.length]; tab(n); n.focus(); e.stopPropagation(); });
+  });
+  tab(tabs[0]);
+
+  // отделка
+  function group(box, list, key) {
+    list.forEach(function (o) {
+      var b = el('button', 'toggle-button toggle-button--sm', o.name); b.type = 'button'; b.setAttribute('data-val', o.id);
+      b.addEventListener('click', function () { opt[key] = o.id; apply(); });
+      box.appendChild(b);
+    });
+  }
+  group($('optLogo'), P.LOGO, 'logo'); group($('optCoat'), P.COAT, 'coat');
+  P.PALETTE.forEach(function (c) {
+    var b = el('button', 'swb'); b.type = 'button'; b.style.background = c.hex; b.setAttribute('data-val', c.id); b.setAttribute('aria-label', c.name); b.title = c.name;
+    if (it.fixedBase) b.disabled = c.id !== it.fixedBase;
+    b.addEventListener('click', function () { opt.base = c.id; apply(); });
+    $('sws').appendChild(b);
+  });
+  $('optReset').addEventListener('click', function () { fromVariant(); apply(); });
+  function paintOpts() {
+    [['sws', 'base'], ['optLogo', 'logo'], ['optCoat', 'coat']].forEach(function (p) {
+      Array.prototype.forEach.call($(p[0]).children, function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-val') === opt[p[1]] ? 'true' : 'false'); });
+    });
+    var c = P.PALETTE.filter(function (x) { return x.id === opt.base; })[0]; $('baseName').textContent = c ? c.name : '';
+    $('optReset').disabled = !changed();
+  }
+
+  // варианты
+  var vbtns = it.variants.map(function (v, i) {
+    var b = el('button', 'vr'); b.type = 'button';
+    var img = el('img'); img.alt = ''; img.width = 240; img.height = 180; b.appendChild(img);
+    var s = el('span'); s.appendChild(el('small', '', pad(i + 1))); s.appendChild(document.createTextNode(v.name)); b.appendChild(s);
+    b.addEventListener('click', function () { pick(i); });
+    $('variants').appendChild(b); return b;
+  });
+  $('varHint').textContent = it.stub ? 'Условные, до загрузки макетов' : '';
+  function pick(i) { vi = (i + it.variants.length) % it.variants.length; fromVariant(); apply(); vbtns[vi].scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+  $('prev').addEventListener('click', function () { pick(vi - 1); });
+  $('next').addEventListener('click', function () { pick(vi + 1); });
+  if (it.variants.length < 2) { $('prev').hidden = $('next').hidden = true; }
+  function paintNow() {
+    var v = it.variants[vi];
+    $('nowCnt').textContent = pad(vi + 1) + ' / ' + pad(it.variants.length);
+    $('nowName').textContent = v.name; $('nowNote').textContent = changed() ? 'С вашей примеркой отделки' : v.note || '';
+    vbtns.forEach(function (b, i) { b.setAttribute('aria-pressed', i === vi ? 'true' : 'false'); });
+  }
+
+  // ───── 3D ─────
+  var stageEl = $('stage'), cv = $('gl'), renderer = null, stage = null, holder = null, need = true;
+  var VIEWS = { front: [0, 0], angle: [-0.6, 0.16], back: [Math.PI, 0] };
+  var yaw = VIEWS.angle[0], pitch = VIEWS.angle[1], ty = yaw, tp = pitch, zoom = 1, tz = 1, auto = false;
+  function rebuild() {
+    if (!renderer) return;
+    if (holder) { stage.scene.remove(holder); P.dispose(holder); }
+    holder = P.build(it, opt, function () { need = true; }); stage.scene.add(holder); need = true;
+  }
+  function apply() {
+    paintOpts(); paintNow(); rebuild();
+    try { history.replaceState(null, '', url()); } catch (e) {}
+  }
+  function size() {
+    if (!renderer) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+    if (w && h && (cv.width !== w || cv.height !== h)) { renderer.setSize(w, h, false); need = true; }
+  }
+  function render() { P.frameIt(stage, holder, cv.width / cv.height, zoom, yaw, pitch); renderer.render(stage.scene, stage.cam); }
+  function setView(name) {
+    var v = VIEWS[name], k = Math.round((yaw - v[0]) / (2 * Math.PI)); ty = v[0] + k * 2 * Math.PI; tp = v[1]; setAuto(false);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-view') === name ? 'true' : 'false'); });
+  }
+  function clearView() { Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) { b.setAttribute('aria-pressed', 'false'); }); }
+  function setAuto(on) { auto = on; $('auto').setAttribute('aria-pressed', on ? 'true' : 'false'); }
+
+  if (P.webgl() && window.THREE) {
+    try { renderer = P.makeRenderer(cv, 4, 4); stage = P.makeScene(renderer); } catch (e) { renderer = null; }
+  }
+  if (!renderer) { $('nogl').hidden = false; document.querySelector('.viewbar').hidden = true; }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) { b.addEventListener('click', function () { setView(b.getAttribute('data-view')); }); });
+  $('auto').addEventListener('click', function () { setAuto(!auto); if (auto) clearView(); });
+  $('studio').addEventListener('click', function () {
+    var on = document.documentElement.getAttribute('data-studio') !== 'dark';
+    if (on) document.documentElement.setAttribute('data-studio', 'dark'); else document.documentElement.removeAttribute('data-studio');
+    $('studio').setAttribute('aria-pressed', on ? 'true' : 'false');
+    try { localStorage.setItem('palazzo-studio', on ? '1' : ''); } catch (e) {}
+  });
+  try { if (localStorage.getItem('palazzo-studio') === '1') $('studio').click(); } catch (e) {}
+  function zoomBy(k) { tz = Math.max(0.5, Math.min(3.2, tz * k)); }
+  $('zin').addEventListener('click', function () { zoomBy(1.2); });
+  $('zout').addEventListener('click', function () { zoomBy(1 / 1.2); });
+  cv.addEventListener('wheel', function (e) { e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.08 : 1 / 1.08); }, { passive: false });
+
+  // вращение мышью и пальцем; два пальца — масштаб
+  var pts = {}, pinch = 0;
+  cv.addEventListener('pointerdown', function (e) { pts[e.pointerId] = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); cv.classList.add('grabbing'); setAuto(false); });
+  cv.addEventListener('pointermove', function (e) {
+    var p = pts[e.pointerId]; if (!p) return;
+    var ids = Object.keys(pts);
+    if (ids.length === 2) {
+      pts[e.pointerId] = [e.clientX, e.clientY];
+      var a = pts[ids[0]], b = pts[ids[1]], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pinch) zoomBy(d / pinch); pinch = d; return;
+    }
+    var dx = e.clientX - p[0], dy = e.clientY - p[1]; pts[e.pointerId] = [e.clientX, e.clientY];
+    ty += dx * 0.008; if (e.pointerType === 'mouse') tp = Math.max(-0.9, Math.min(0.9, tp + dy * 0.006));
+    yaw = ty; pitch = tp; need = true; clearView();
+  });
+  function up(e) { delete pts[e.pointerId]; pinch = 0; if (!Object.keys(pts).length) cv.classList.remove('grabbing'); }
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  document.addEventListener('keydown', function (e) {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight') pick(vi + 1); else if (e.key === 'ArrowLeft') pick(vi - 1);
+  });
+
+  // PNG и ссылка
+  $('shot').addEventListener('click', function () {
+    if (!renderer) return say('3D недоступен в этом браузере');
+    render();
+    var a = document.createElement('a'); a.download = 'palazzo-' + it.id + '-' + pad(vi + 1) + '.png'; a.href = cv.toDataURL('image/png'); a.click();
+    say('Ракурс сохранён в PNG с прозрачным фоном');
+  });
+  $('copyLink').addEventListener('click', function () {
+    var link = location.origin + url();
+    (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { say('Ссылка скопирована'); }, function () { window.prompt('Ссылка на вариант', link); });
+  });
+
+  // миниатюры вариантов: отдельный маленький рендерер
+  function thumbs() {
+    if (!renderer) return;
+    var tc = document.createElement('canvas'), r, s;
+    try { r = P.makeRenderer(tc, 480, 360); s = P.makeScene(r); } catch (e) { return; }
+    it.variants.forEach(function (v, i) {
+      var h = P.build(it, { base: it.fixedBase || v.base, logo: v.logo, coat: v.coat });
+      s.scene.add(h); P.frameIt(s, h, 4 / 3, 0.9, -0.5, 0.14); r.render(s.scene, s.cam);
+      vbtns[i].firstChild.src = tc.toDataURL('image/png');
+      s.scene.remove(h); P.dispose(h);
+    });
+    r.dispose(); if (r.forceContextLoss) r.forceContextLoss();
+  }
+
+  P.syncSelected();
+  apply(); thumbs();
+  if (renderer) {
+    var last = 0, still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    (function tick(now) {
+      requestAnimationFrame(tick);
+      var dt = Math.min(0.05, ((now || 0) - last) / 1000); last = now || 0;
+      size();
+      if (auto) { ty += dt * 0.5; }
+      var k = still ? 1 : Math.min(1, dt * 9), moved = Math.abs(ty - yaw) + Math.abs(tp - pitch) + Math.abs(tz - zoom) > 0.0005;
+      if (moved) { yaw += (ty - yaw) * k; pitch += (tp - pitch) * k; zoom += (tz - zoom) * k; need = true; }
+      if (need && holder && cv.width > 8) { render(); need = false; }
+    })(0);
+  }
+})();
+</script>

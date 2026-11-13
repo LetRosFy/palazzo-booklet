@@ -185,7 +185,7 @@
       var id = activeId(); if (!id) return;
       var n = idx(id) + 1;
       try { history.replaceState(null, '', '#' + n); } catch (e) {}
-      if (toBook) toBook.href = '/?cover=' + id;
+      if (toBook) toBook.href = '/booklet/?cover=' + id;
       if (pc) pc.textContent = (n < 10 ? '0' + n : n) + ' · ' + document.getElementById('nowName').textContent;
     }
     var h = parseInt((location.hash || '').slice(1), 10);
